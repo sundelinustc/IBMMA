@@ -12,4 +12,8 @@ In summary, IBMMA is an optimal tool for big neuroimaging data analysis and disp
 
 # Installation
 
-IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere in your computer.
+IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there are a file called "path_para.xlsx" and a folder called "SDL_functions".
+
+# File Structure
+
+**path_para.xlsx**: This file contains all information of paths and parameters for statistical analysis. 
