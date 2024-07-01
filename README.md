@@ -18,7 +18,7 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Th
 
 -- Sheet "demographic_clinical" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
 
--- Sheet "data_path" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HalfPipe. 
+-- Sheet "data_path" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HALFPIPE. 
 
 -- Sheet "data_pattern" lists the pattern (part of a file name) of files of interest. For example, "_feature-fALFF_alff.nii.gz" for NIFTI data, "_feature-fALFF_alff.json" contains the important information to the corresponding NIFTI data, and "_feature-fALFF_mask.nii.gz" refers to the corresponding NIFTI mask.
 
@@ -27,7 +27,7 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Th
 -- Sheet "models" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the conplex design matrix and contrasts by themselves.
 
 
-**Step 2**: 
+**Step 2**: IBMMA masks the data file (whatever a NIFTI image or an adjacent matrix) using the mask file that has the same dimension as the data file. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
 
 # Installation
 
