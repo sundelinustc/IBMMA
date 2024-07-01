@@ -9,3 +9,7 @@ One of IBMMA's strengths lies in its modeling flexibility. It not only employs w
 IBMMA produces multiple statistical outputs and model estimations that are consistent with the raw data in terms of dimensionality. This consistency ensures that the results are easily visualized and compared across different models, facilitating comprehensive data analysis and interpretation.
 
 In summary, IBMMA is an optimal tool for big neuroimaging data analysis and displaying statistical results. Its powerful capabilities, versatility, and user-friendly output make it an indispensable asset for researchers working with large-scale neuroimaging datasets from multiple study sites.
+
+# Installation
+
+IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere in your computer.
