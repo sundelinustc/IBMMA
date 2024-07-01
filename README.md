@@ -1,4 +1,4 @@
-#Background
+# Background
 
 Image-Based Meta- & Mega-Analysis (IBMMA) is a powerful and versatile free software package designed for meta- and mega-analysis on neuroimaging datasets aggregated from multiple study sites. It employs mass-univariate statistical models to analyze diverse neuroimaging features, including voxel-, vertex-, and connectome-based anatomical and functional brain measures.
 
