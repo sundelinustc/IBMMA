@@ -29,6 +29,12 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Th
 
 **Step 2**: IBMMA masks the data file (whatever a NIFTI image or an adjacent matrix) using the mask file that has the same dimension as the data file. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
 
+**Step 3**: IBMMA flattens any kind of data into one-dimension.
+
+**Step 4**: IBMMA extracts the _i_th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is 50.
+
+**Step 5**: IBMMA runs statistical modelling by calling R or Python scripts to run parallel analysis. It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "module load R/latest" if R is not explicited in your path.
+
 # Installation
 
 IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there are a file called "path_para.xlsx" and a folder called "SDL_functions".
