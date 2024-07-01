@@ -13,6 +13,7 @@ In summary, IBMMA is an optimal tool for big neuroimaging data analysis and disp
 # How Does it Work
 
 IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. The users just need to dowload the package and setup the "path_para.xlsx" file correctly.
+
 **Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". 
 -- Sheet "demographic_clinical" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
 -- Sheet "data_path" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HalfPipe. 
