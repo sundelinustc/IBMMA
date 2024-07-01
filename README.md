@@ -1,6 +1,6 @@
 # Background
 
-Image-Based Meta- & Mega-Analysis (IBMMA) is a powerful and versatile free software package designed for meta- and mega-analysis on neuroimaging datasets aggregated from multiple study sites. It employs mass-univariate statistical models to analyze diverse neuroimaging features, including voxel-, vertex-, and connectome-based anatomical and functional brain measures.
+**Image-Based Meta- & Mega-Analysis (IBMMA)** is a powerful and versatile free software package designed for meta- and mega-analysis on neuroimaging datasets aggregated from multiple study sites. It employs mass-univariate statistical models to analyze diverse neuroimaging features, including voxel-, vertex-, and connectome-based anatomical and functional brain measures.
 
 IBMMA harnesses the power of parallel processing by leveraging multi-CPU capabilities available in modern clusters and personal computers. It boasts the remarkable ability to perform statistical analysis on thousands of subjects and millions of neuroimaging features simultaneously, across various platforms such as Linux, Mac, and Windows. This capability is crucial for analyzing big neuroimaging datasets that far exceed the scale of most single cohort studies prevalent in the past two decades.
 
@@ -16,4 +16,6 @@ IBMMA is still at its beta version. Users please download the whole folder and u
 
 # File Structure
 
-**path_para.xlsx**: This file contains all information of paths and parameters for statistical analysis. 
+## path_para.xlsx
+This file contains all information of paths and parameters for statistical analysis. It has a few sheets:
+**demographic_clinical**:
