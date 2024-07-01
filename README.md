@@ -15,10 +15,15 @@ In summary, IBMMA is an optimal tool for big neuroimaging data analysis and disp
 IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. The users just need to dowload the package and setup the "path_para.xlsx" file correctly.
 
 **Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". 
+
 -- Sheet "demographic_clinical" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
+
 -- Sheet "data_path" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HalfPipe. 
+
 -- Sheet "data_pattern" lists the pattern (part of a file name) of files of interest. For example, "_feature-fALFF_alff.nii.gz" for NIFTI data, "_feature-fALFF_alff.json" contains the important information to the corresponding NIFTI data, and "_feature-fALFF_mask.nii.gz" refers to the corresponding NIFTI mask.
+
 -- Sheet "predictors" lists all variables that appear in the statistical model(s). The users can match the variables in the models to the variables listed in the file of demograohic and clinical information, and they can also match the values per variable.
+
 -- Sheet "models" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the conplex design matrix and contrasts by themselves.
 
 
