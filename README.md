@@ -31,17 +31,17 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Th
 
 **Step 3**: IBMMA flattens any kind of data into one-dimension.
 
-**Step 4**: IBMMA extracts the _i_th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is 50.
+**Step 4**: IBMMA extracts the _i_ th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is _50_.
 
-**Step 5**: IBMMA runs statistical modelling by calling R or Python scripts to run parallel analysis. It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "module load R/latest" if R is not explicited in your path.
+**Step 5**: IBMMA runs statistical modelling by calling R or Python scripts to run parallel analysis. There are two types of statistical outputs: TIDY, which includs the information that are often listed in reports and articles (such as regression coefficients, degree of freedom, T values, p values); and GLANCE, which includes estimates of model fitting (such as AIC, BIC, and number of observations). TIDY & GLANCE are from R package _broom_.
+It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "module load R/latest" if R is not explicited in your path.
+
+**Step 6**: IBMMA concatenates the statistical outputs from different degments into one.
+
+**Step 7**: IBMMA reverses the concatenated statistical outputs back to the original dimensions of the input data. That is to say, statistical analyses outputs for NIFTI image are still NIFTI images, and for adjacent matrix are still matrix. This step also includes FDR correction for multiple comparisons as well as negatively log10 transformed p-values for observation purpose.
 
 # Installation
 
 IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there are a file called "path_para.xlsx" and a folder called "SDL_functions".
 
-# File Structure
-
-## path_para.xlsx
-This file contains all information of paths and parameters for statistical analysis. It has a few sheets:
-### **demographic_clinical**
 
