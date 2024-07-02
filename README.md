@@ -10,6 +10,8 @@ IBMMA produces multiple statistical outputs and model estimations that are consi
 
 In summary, IBMMA is an optimal tool for big neuroimaging data analysis and displaying statistical results. Its powerful capabilities, versatility, and user-friendly output make it an indispensable asset for researchers working with large-scale neuroimaging datasets from multiple study sites.
 
+The current version was mainly developped and tested through using the VSCode(Visual Studio Code) software under Linux platform running on Duke BIAC Cluster. More tests and debugs are needed for different platforms and operating systems. Please download & test the code. Please feel free to contact me at **_ds366@duke.edu_** if you meet any problem.
+
 # Installation
 
 IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" (a template for users to modify acoording to their own data), a file called "**_ibmma.py_**", and a folder called "**_SDL_functions_**".
@@ -22,7 +24,7 @@ IBMMA has a pipeline to automatically run all steps of Meta-analysis (under deve
 
 -- Sheet "**_demographic_clinical_**" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
 
--- Sheet "**_data_path_**" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HALFPIPE. 
+-- Sheet "**_data_path_**" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as **_HALFPIPE_**. 
 
 -- Sheet "**_data_pattern_**" lists the pattern (part of a file name) of files of interest. For example, "_feature-fALFF_alff.nii.gz" for NIFTI data, "_feature-fALFF_alff.json" contains the important information to the corresponding NIFTI data, and "_feature-fALFF_mask.nii.gz" refers to the corresponding NIFTI mask.
 
@@ -48,7 +50,7 @@ It should be noted that, in some high performance computer (HPC) or cluster, The
 
 In the folder "**_Results_**", users could find the subfolders with name listed in the sheet "**_data_pattern_**" column "**_NAME_**". Within each subfolder, there are two folders named "**_Mega_**" and "**_Meta_**" (under development). Within "**_Mega_**", there are two subfolder "**_TIDY_**" and "**_GLANCE_**".
 
--- In the folder "**_TIDY_**", there are subfolders 
+In the folder "**_TIDY_**", there are subfolders: 
 
 ---- "**_df_**": Degree of Freedom.
 
@@ -62,7 +64,7 @@ In the folder "**_Results_**", users could find the subfolders with name listed 
 
 ---- "**_std.error_**": standrad error. 
 
--- In the folder "**_GLANCE_**", there are subfolders 
+In the folder "**_GLANCE_**", there are subfolders: 
 
 ---- "**_AIC_**": Akaike Information Criterion. A measure of model quality that balances goodness of fit with model simplicity. Lower AIC values indicate better models.
 
@@ -77,6 +79,18 @@ In the folder "**_Results_**", users could find the subfolders with name listed 
 ---- "**_REMLcrit_**": Restricted Maximum Likelihood Criterion. A criterion used in mixed-effects models for estimating variance components. It's an alternative to maximum likelihood estimation.
 
 ---- "**_sigma_**": Residual Standard Error. An estimate of the standard deviation of the residuals in a regression model. It measures the average distance between the observed values and the predicted values.
+
+# Next Versions
+
+Several modules and functions have been planned to be incorporated into IBMMA in future versions:
+
+---- Meta analysis section. 
+
+---- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images and NBS for connection matrix will be added.
+
+---- Measures module. The current IBMMA is designed for statistical analysis on data preprocessed by softwares such as HALFPIPE. A new module may be included to get measures (e.g., static and dynamic functional connectivity, community entropy) based on the preprocessed data and enter them to statistical modellings.
+
+---- Collaboration with **_DS (Deep Simple)_** package () to promote manuscript preparations.
 
 
 
