@@ -12,23 +12,23 @@ In summary, IBMMA is an optimal tool for big neuroimaging data analysis and disp
 
 # Installation
 
-IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" and a folder called "**_SDL_functions_**".
+IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" (a template for users to modify acoording to their own data), a file called "**_ibmma.py_**", and a folder called "**_SDL_functions_**".
 
 # How Does It Work?
 
-IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. After installation, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes. IBMMA runs across data patterns (i.e., rows in the sheet "**_data_pattern_**") and statistical models (i.e., rows in the sheet "**_models_**"). Please be patient to large datasets from multiple study sites, with diverse data types, and multiple statistical models. You may spend several hours to get the final outputs.
+IBMMA has a pipeline to automatically run all steps of Meta-analysis (under development) & Mega-analysis. After installation, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes. IBMMA runs across data patterns (i.e., rows in the sheet "**_data_pattern_**") and statistical models (i.e., rows in the sheet "**_models_**"). Please be patient to large datasets from multiple study sites, with diverse data types, and multiple statistical models. You may spend several hours to get the final outputs.
 
-**Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". It also generates a new folder "**_Processes_**" to save all of the temporal outputs.
+**Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". It also generates a new folder "**_Processes_**" to contain all of the temporal outputs. It generates a file called "**_Subjects.csv_**" under the folder "**_Processes_**" to store demographic, clinical, and data (paths to data) information.
 
--- Sheet "demographic_clinical" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
+-- Sheet "**_demographic_clinical_**" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
 
--- Sheet "data_path" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HALFPIPE. 
+-- Sheet "**_data_path_**" lists the path(s) to the folders of data that were the outputs of some preprocessing softwares such as HALFPIPE. 
 
--- Sheet "data_pattern" lists the pattern (part of a file name) of files of interest. For example, "_feature-fALFF_alff.nii.gz" for NIFTI data, "_feature-fALFF_alff.json" contains the important information to the corresponding NIFTI data, and "_feature-fALFF_mask.nii.gz" refers to the corresponding NIFTI mask.
+-- Sheet "**_data_pattern_**" lists the pattern (part of a file name) of files of interest. For example, "_feature-fALFF_alff.nii.gz" for NIFTI data, "_feature-fALFF_alff.json" contains the important information to the corresponding NIFTI data, and "_feature-fALFF_mask.nii.gz" refers to the corresponding NIFTI mask.
 
--- Sheet "predictors" lists all variables that appear in the statistical model(s). The users can match the variables in the models to the variables listed in the file of demograohic and clinical information, and they can also match the values per variable.
+-- Sheet "**_predictors_**" lists all variables that appear in the statistical model(s). The users can match the variables in the models to the variables listed in the file of demograohic and clinical information, and they can also match the values per variable.
 
--- Sheet "models" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the complex design matrix and contrasts by themselves.
+-- Sheet "**_models_**" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the complex design matrix and contrasts by themselves.
 
 
 **Step 2**: IBMMA generates a new folder "**_masked_**" under the folder "**_Processes_**" and masks the data files (whatever NIFTI images or adjacent matrix saved in .csv files) using the mask files that have the same dimension as the data files. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
@@ -38,7 +38,7 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Af
 **Step 4**: IBMMA generates a new folder "**_segmented_**" under the folder "**_Processes_**" and  extracts the _i_ th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is _50_.
 
 **Step 5**: IBMMA generates a new folder "**_stats_**" under the folder "**_Processes_**" and  runs statistical modelling by calling R or Python scripts to run parallel analysis. There are two types of statistical outputs: TIDY, which includs the information that are often listed in reports and articles (such as regression coefficients, degree of freedom, T values, p values); and GLANCE, which includes estimates of model fitting (such as AIC, BIC, and number of observations). TIDY & GLANCE are from R package _broom_.
-It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "module load R/latest" if R is not explicited in your path.
+It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "**_module load R/latest_**" if R was not explicited installed in your path.
 
 **Step 6**: IBMMA generates a new folder folder "**_Results_**" and concatenates the statistical outputs from different degments into one.
 
@@ -47,6 +47,36 @@ It should be noted that, in some high performance computer (HPC) or cluster, The
 # Outputs
 
 In the folder "**_Results_**", users could find the subfolders with name listed in the sheet "**_data_pattern_**" column "**_NAME_**". Within each subfolder, there are two folders named "**_Mega_**" and "**_Meta_**" (under development). Within "**_Mega_**", there are two subfolder "**_TIDY_**" and "**_GLANCE_**".
+
+-- In the folder "**_TIDY_**", there are subfolders 
+
+---- "**_df_**": Degree of Freedom.
+
+---- "**_estimate_**": Regression coefficient.
+
+---- "**_p.value_**": Uncorrected p value.
+
+---- "**_p.value.fdr_**": FDR corrected p value.
+
+---- "**_statistic_**": t value.
+
+---- "**_std.error_**": standrad error. 
+
+-- In the folder "**_GLANCE_**", there are subfolders 
+
+---- "**_AIC_**": Akaike Information Criterion. A measure of model quality that balances goodness of fit with model simplicity. Lower AIC values indicate better models.
+
+---- "**_BIC_**": Bayesian Information Criterion. Similar to AIC, but penalizes model complexity more strongly. Also used for model selection, with lower values being better.
+
+---- "**_df.residual_**": Degrees of Freedom Residual. The number of observations minus the number of parameters estimated in the model. It represents the remaining degrees of freedom after fitting the model.
+
+---- "**_logLik_**": Log-Likelihood. The logarithm of the likelihood function, which measures how well the model fits the observed data.
+
+---- "**_nobs_**": Number of observations. The total number of data points used in the analysis. It is very important to understand how the findings are influenced by the sample size in big data analysis.
+
+---- "**_REMLcrit_**": Restricted Maximum Likelihood Criterion. A criterion used in mixed-effects models for estimating variance components. It's an alternative to maximum likelihood estimation.
+
+---- "**_sigma_**": Residual Standard Error. An estimate of the standard deviation of the residuals in a regression model. It measures the average distance between the observed values and the predicted values.
 
 
 
