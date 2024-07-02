@@ -14,7 +14,7 @@ The current version was mainly developped and tested through using the VSCode(Vi
 
 # Installation
 
-IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" (a template for users to modify acoording to their own data), a file called "**_ibmma.py_**", and a folder called "**_SDL_functions_**".
+IBMMA is still at its early stage. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" (a template for users to modify acoording to their own data), a file called "**_ibmma.py_**", and a folder called "**_SDL_functions_**".
 
 # How Does It Work?
 
