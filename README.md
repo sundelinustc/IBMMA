@@ -16,7 +16,7 @@ IBMMA is still at its beta version. Users please download the whole folder and u
 
 # How Does it Work
 
-IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. The users just need to dowload the package and setup the "_path_para.xlsx_" file correctly. After that, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes.
+IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. After installation, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes. Please be patient to large datasets from multiple study sites, with diverse data types, and multiple statistical models. You may spend several hours to get the final outputs.
 
 **Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". It also generates a new folder "**_Processes_**" to save all of the temporal outputs.
 
