@@ -10,11 +10,15 @@ IBMMA produces multiple statistical outputs and model estimations that are consi
 
 In summary, IBMMA is an optimal tool for big neuroimaging data analysis and displaying statistical results. Its powerful capabilities, versatility, and user-friendly output make it an indispensable asset for researchers working with large-scale neuroimaging datasets from multiple study sites.
 
+# Installation
+
+IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" and a folder called "**_SDL_functions_**".
+
 # How Does it Work
 
-IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. The users just need to dowload the package and setup the "path_para.xlsx" file correctly.
+IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. The users just need to dowload the package and setup the "_path_para.xlsx_" file correctly. After that, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes.
 
-**Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". 
+**Step 1**: IBMMA search all files (data, mask, and information) based on their paths and patterns (part of the filenames) listed in "path_para.xlsx". It also generates a new folder "**_Processes_**" to save all of the temporal outputs.
 
 -- Sheet "demographic_clinical" indicates the path to the .xlsx file and the name of the sheet for demographic and clinical information. 
 
@@ -24,24 +28,22 @@ IBMMA has a pipeline to automatically run all steps of Meta- & Mega-analysis. Th
 
 -- Sheet "predictors" lists all variables that appear in the statistical model(s). The users can match the variables in the models to the variables listed in the file of demograohic and clinical information, and they can also match the values per variable.
 
--- Sheet "models" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the conplex design matrix and contrasts by themselves.
+-- Sheet "models" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the complex design matrix and contrasts by themselves.
 
 
-**Step 2**: IBMMA masks the data file (whatever a NIFTI image or an adjacent matrix) using the mask file that has the same dimension as the data file. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
+**Step 2**: IBMMA generates a new folder "**_masked_**" under the folder "**_Processes_**" and masks the data files (whatever NIFTI images or adjacent matrix saved in .csv files) using the mask files that have the same dimension as the data files. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
 
-**Step 3**: IBMMA flattens any kind of data into one-dimension.
+**Step 3**: IBMMA generates a new folder "**_flattened_**" under the folder "**_Processes_**" and flattens any kind of data into one-dimension.
 
-**Step 4**: IBMMA extracts the _i_ th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is _50_.
+**Step 4**: IBMMA generates a new folder "**_segmented_**" under the folder "**_Processes_**" and  extracts the _i_ th segment of the flattened data across subjects and vertically combine them into a new CSV file in which each row represents a subject. The default number of segmentation is _50_.
 
-**Step 5**: IBMMA runs statistical modelling by calling R or Python scripts to run parallel analysis. There are two types of statistical outputs: TIDY, which includs the information that are often listed in reports and articles (such as regression coefficients, degree of freedom, T values, p values); and GLANCE, which includes estimates of model fitting (such as AIC, BIC, and number of observations). TIDY & GLANCE are from R package _broom_.
+**Step 5**: IBMMA generates a new folder "**_stats_**" under the folder "**_Processes_**" and  runs statistical modelling by calling R or Python scripts to run parallel analysis. There are two types of statistical outputs: TIDY, which includs the information that are often listed in reports and articles (such as regression coefficients, degree of freedom, T values, p values); and GLANCE, which includes estimates of model fitting (such as AIC, BIC, and number of observations). TIDY & GLANCE are from R package _broom_.
 It should be noted that, in some high performance computer (HPC) or cluster, The users need to load some module before running IBMMA. For example, enter "module load R/latest" if R is not explicited in your path.
 
-**Step 6**: IBMMA concatenates the statistical outputs from different degments into one.
+**Step 6**: IBMMA generates a new folder folder "**_Results_**" and concatenates the statistical outputs from different degments into one.
 
 **Step 7**: IBMMA reverses the concatenated statistical outputs back to the original dimensions of the input data. That is to say, statistical analyses outputs for NIFTI image are still NIFTI images, and for adjacent matrix are still matrix. This step also includes FDR correction for multiple comparisons as well as negatively log10 transformed p-values for observation purpose.
 
-# Installation
 
-IBMMA is still at its beta version. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there are a file called "path_para.xlsx" and a folder called "SDL_functions".
 
 
