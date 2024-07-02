@@ -84,7 +84,7 @@ In the folder "**_GLANCE_**", there are subfolders:
 
 Several modules and functions have been planned to be incorporated into IBMMA in future versions:
 
----- Meta analysis section. There is an earlier version of the Meta-analysis in IBMMA (). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
+---- Meta analysis section. There is an earlier version of the Meta-analysis in IBMMA (https://github.com/sundelinustc/ENIGMA_PTSD_MDD). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
 
 ---- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images and NBS for connection matrix will be added.
 
