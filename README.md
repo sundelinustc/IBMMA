@@ -84,13 +84,13 @@ In the folder "**_GLANCE_**", there are subfolders:
 
 Several modules and functions have been planned to be incorporated into IBMMA in future versions:
 
----- Meta analysis section. 
+---- Meta analysis section. There is an earlier version of the Meta-analysis in IBMMA (). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
 
 ---- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images and NBS for connection matrix will be added.
 
 ---- Measures module. The current IBMMA is designed for statistical analysis on data preprocessed by softwares such as HALFPIPE. A new module may be included to get measures (e.g., static and dynamic functional connectivity, community entropy) based on the preprocessed data and enter them to statistical modellings.
 
----- Collaboration with **_DS (Deep Simple)_** package () to promote manuscript preparations.
+---- Collaboration with **_DS (Deep Simple)_** package (https://github.com/sundelinustc/Deep_Simple) to promote manuscript preparations.
 
 
 
