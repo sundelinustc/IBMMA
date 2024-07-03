@@ -20,9 +20,19 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 
 ---- **_Missing Values_**. Missing values are common in neuroimaging studies due to diverse scanning protocols and low data quality in certain brain regions (such as the ventral prefrontal cortex and ventral temporal lobe). The voxels with missing values differ slightly among individuals from the same study site but may vary significantly among participants from different sites. Widely used software for statistical analysis of neuroimaging data, such as SPM and FSL, cannot handle missing values correctly. In other words, if a single person has a missing value in a particular voxel, there will be no statistical output for this voxel even if thousands of participants are included in the analysis. Some preprocessing software, such as HalfPipe, fills missing values with zeros. This approach slightly biases the results per study site but may significantly influence the outputs of multi-cohort studies, especially in data associated with brain regions that differ greatly in missing values among study sites. IBMMA addresses this issue by running voxel-specific statistical modeling and providing statistical outputs that show important characteristics (e.g., number of observations and degrees of freedom) per voxel.
 
+---- **_Model Flexibility_**. The most popular statistical models in neuroimaging studies are based on linear regressions. These typically use linear combinations of diagnosis, age, sex, and other covariates to predict brain signals across voxels. For instance: _Brain ~ Diagnosis + Age + Sex_. However, researchers need the ability to create more flexible statistical models to address diverse research questions. Examples include:
+
+    Using linear or non-linear combinations of brain data, demographic, and clinical covariates to predict diagnosis or symptom severity: _Diagnosis ~ Brain + Age + Sex_
+    
+    Utilizing brain data from multiple modalities: _Symptom Severity ~ MRI + rs-fMRI + task-fMRI + Age + Sex_
+    
+    Considering more than one outcome simultaneously, such as in survival analysis: _Surv(time, status) ~ Brain + covariates_
+
+IBMMA can run multiple statistical models by calling released R and Python packages. It simplifies model settings by reading model formulas listed in 'path_para.xlsx'.
+
 # How to Install It?
 
-IBMMA is still at its early stage. Users please download the whole folder and unpack it somewhere (the working space) in your computer. Make sure that, in this folder, there is a file called "**_path_para.xlsx_**" (a template for users to modify acoording to their own data), a file called "**_ibmma.py_**", and a folder called "**_SDL_functions_**".
+IBMMA is still in its early stages of development. Users should download the entire folder and extract it to a location on their computer (the working space). Ensure that this folder contains a file called '**_path_para.xlsx_**' (a template for users to modify according to their own data), a file called '**_ibmma.py_**', and a folder called '**_SDL_functions_**'.
 
 # How Does It Work?
 
