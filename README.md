@@ -90,6 +90,12 @@ In the folder "**_TIDY_**", there are subfolders:
 
 ---- "**_std.error_**": standrad error. 
 
+For example, TIDY outputs for brain images:
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
+
+For another example, TIDY outputs for correlation matrix (symetric) of ROI-to-ROI functional connectivity:
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix.png?raw=true)
+
 In the folder "**_GLANCE_**", there are subfolders: 
 
 ---- "**_AIC_**": Akaike Information Criterion. A measure of model quality that balances goodness of fit with model simplicity. Lower AIC values indicate better models.
