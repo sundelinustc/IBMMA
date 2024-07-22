@@ -94,7 +94,7 @@ For example, TIDY outputs for brain images:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
 
 For another example, TIDY outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix.png?raw=true)
 
 In the folder "**_GLANCE_**", there are subfolders: 
 
