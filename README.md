@@ -30,8 +30,11 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 
 (b) Utilizing brain data from multiple modalities: _Symptom Severity ~ MRI + rs-fMRI + task-fMRI + Age + Sex_; 
 
-(c) Considering more than one outcome simultaneously, such as in survival analysis: _Surv(time, status) ~ Brain + covariates_. IBMMA can run multiple statistical models by calling released R and Python packages. It simplifies model settings by reading model formulas listed in '**_path_para.xlsx_**'.
+(c) Considering more than one outcome simultaneously, such as in survival analysis: _Surv(time, status) ~ Brain + covariates_. 
 
+IBMMA can run multiple statistical models by calling released R and Python packages. It simplifies model settings by reading model formulas listed in '**_path_para.xlsx_**'.
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Models.png?raw=true)
 
 # How to Install It?
 
