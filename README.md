@@ -93,8 +93,8 @@ In the folder "**_TIDY_**", there are subfolders:
 For example, TIDY outputs for brain images:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
 
-For another example, TIDY outputs for correlation matrix (symetric) of ROI-to-ROI functional connectivity:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix.png?raw=true)
+For another example, TIDY outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
 
 In the folder "**_GLANCE_**", there are subfolders: 
 
@@ -115,7 +115,7 @@ In the folder "**_GLANCE_**", there are subfolders:
 For example, GLANCE outputs for brain images:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE.png?raw=true)
 
-For another example, GLANCE outputs for correlation matrix (symetric) of ROI-to-ROI functional connectivity:
+For another example, GLANCE outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE_Matrix.png?raw=true)
 
 # What Will Come in Next Versions?
