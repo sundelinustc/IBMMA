@@ -107,9 +107,11 @@ Several modules and functions have been planned to be incorporated into IBMMA in
 
 ---- Multiple data format. The current version is for the functional neuroimaging data (voxel-based images in *.nii.gz format or connectom-based matrix in .csv format) preprocessed by softwares such as HALFPIPE. The updated IBMMA version will have the ability to do analyses on any format of neuroimaging data, such as cortical thickness, surface area, and gyrification.
 
----- Effect size.
+---- Effect size. Calculations of efect size are important in many aspects such as Power analysis. Future version of IBMMA may include the function to calculate the whole-brain map and matrix of effect size. However, calculation of effect size may be tricky in some models such as linear mixed effects models.
 
 ---- Measures module. The current IBMMA is designed for statistical analysis on data preprocessed by softwares such as HALFPIPE. A new module may be included to get measures (e.g., static and dynamic functional connectivity, community entropy) based on the preprocessed data and enter them to statistical modellings.
+
+---- Normative modeling. Normative modeling is an emerging and innovative framework for mapping individual differences at the level of a single subject or observation in relation to a reference model (see https://www.nature.com/articles/s41596-022-00696-5). Future versions of IBMMA may add this function to chart centiles of variation across a population in terms of mappings between biology and behavior, which can then be used to make statistical inferences at the level of the individual. 
 
 ---- Collaboration with **_DS (Deep Simple)_** package (https://github.com/sundelinustc/Deep_Simple) to promote manuscript preparations.
 
