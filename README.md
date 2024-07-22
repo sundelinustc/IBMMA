@@ -113,7 +113,7 @@ In the folder "**_GLANCE_**", there are subfolders:
 ---- "**_sigma_**": Residual Standard Error. An estimate of the standard deviation of the residuals in a regression model. It measures the average distance between the observed values and the predicted values.
 
 For example, GLANCE outputs for brain images:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCEY.png?raw=true)
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE.png?raw=true)
 
 For another example, GLANCE outputs for correlation matrix (symetric) of ROI-to-ROI functional connectivity:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE_Matrix.png?raw=true)
