@@ -96,6 +96,10 @@ For example, TIDY outputs for brain images:
 For another example, TIDY outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix.png?raw=true)
 
+It also provides FDR_corrected p values and log10() transformed p values for observation purposes:
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix_ps.png?raw=true)
+
 In the folder "**_GLANCE_**", there are subfolders: 
 
 ---- "**_AIC_**": Akaike Information Criterion. A measure of model quality that balances goodness of fit with model simplicity. Lower AIC values indicate better models.
