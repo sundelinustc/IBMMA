@@ -18,7 +18,7 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 
 ---- **_Data harmonization_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig1.png?raw=true)
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Meta_Mega.png?raw=true)
 
 ---- **_Data Flexibility_**. Neuroimaging data comes in various formats, including 3D/4D images of brain structures and functions, 2D matrices of brain connections between different regions, and 1D data such as values extracted from regions of interest (ROI). Numerous software packages exist, each targeting specific data types. Consequently, researchers often invest significant time and resources learning to use these different tools. IBMMA addresses this challenge by providing a uniform pipeline to analyze all data types consistently. Specifically, IBMMA flattens any type of data into a 1D format and performs statistical analyses on the elements of this 1D data using parallel processing.
 
