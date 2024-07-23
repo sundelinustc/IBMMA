@@ -23,7 +23,7 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 We can get robust and beautiful Meta- and Mega-analysis results:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
 
-We can also compare results of different data type or preprocessing protocals:
+We can also compare results of different data types or preprocessing protocals:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Multi_Data.png?raw=true)
 
 ---- **_Data Flexibility_**. Neuroimaging data comes in various formats, including 3D/4D images of brain structures and functions, 2D matrices of brain connections between different regions, and 1D data such as values extracted from regions of interest (ROI). Numerous software packages exist, each targeting specific data types. Consequently, researchers often invest significant time and resources learning to use these different tools. IBMMA addresses this challenge by providing a uniform pipeline to analyze all data types consistently. Specifically, IBMMA flattens any type of data into a 1D format and performs statistical analyses on the elements of this 1D data using parallel processing.
