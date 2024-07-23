@@ -50,6 +50,22 @@ IBMMA is still in its early stages of development. Users should download the ent
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_demographic_clinical.png?raw=true)
 
+----**_Data Path_**. 
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_path.png?raw=true)
+
+----**_Data Pattern_**. 
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_pattern.png?raw=true)
+
+----**_Predictors_**. 
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_predictors.png?raw=true)
+
+----**_Models_**. 
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_models.png?raw=true)
+
 # How Does It Work?
 
 IBMMA has a pipeline to automatically run all steps of Meta-analysis (under development) & Mega-analysis. After installation, the users could run IBMMA by entering "**_python ibmma.py_**" in the terminal and wait for the final outcomes. IBMMA runs across data patterns (i.e., rows in the sheet "**_data_pattern_**") and statistical models (i.e., rows in the sheet "**_models_**"). Please be patient to large datasets from multiple study sites, with diverse data types, and multiple statistical models. You may spend several hours to get the final outputs.
