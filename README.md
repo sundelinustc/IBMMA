@@ -50,23 +50,23 @@ IBMMA can run multiple statistical models by calling released R and Python packa
 
 IBMMA is still in its early stages of development. Users should download the entire folder and extract it to a location on their computer (the working space). Ensure that this folder contains a file called '**_path_para.xlsx_**' (a template for users to modify according to their own data), a file called '**_ibmma.py_**', and a folder called '**_SDL_functions_**'.
 
-----**_Demographic & Clinical File Path_**. 
+----**_Demographic & Clinical File Path_**. "FILE" lists the paths to the .xlsx file of demographic & clinical information, and the corresponding sheet name (listed in "SHEET") in this .xlsx file. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_demographic_clinical.png?raw=true)
 
-----**_Data Path_**. 
+----**_Data Path_**. IBMMA does search automatically and recursively across all of the subfolders under the folders with specified "PATH" for the files of interest. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_path.png?raw=true)
 
-----**_Data Pattern_**. 
+----**_Data Pattern_**. IBMMA search across the data paths for the files with keywords in their filenames. You MUST define the keywords for "DATA", and may also define the keywords for "INFO" (joson files that usually contain data information such as TR of MRI/fMRI scanning) and "MASK" (i.e., subject-specific mask images). The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_pattern.png?raw=true)
 
-----**_Predictors_**. 
+----**_Predictors_**. It helps to rename and filter the variables / variable levels of interest. "VAR" lists the variable names in the model formula, and "NAME" lists the corresponding variable names in the demographic and clinical document. "OLD2NEW" lists the conversions from the old variable levels in "NAME" and the corresponding new levels in "VAR". "VALUES" lists the variable values to be included in analysis. The cases that the corresponding variable values are not listed here will be removed from analysis. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_predictors.png?raw=true)
 
-----**_Models_**. 
+----**_Models_**. IBMMA now recognizes model formulas in R style. You do not need to set up the design matrix and contrasts by yourself.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_models.png?raw=true)
 
