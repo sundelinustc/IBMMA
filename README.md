@@ -16,7 +16,7 @@ The current version was mainly developped and tested through using the VSCode(Vi
 
 Neuroimaging studies on large datasets aggregated from multiple sites (or sources) are becoming increasingly popular. Data repositories such as ENIGMA and NCANDA often provide brain data from hundreds or thousands of individuals. Findings from these large neuroimaging datasets are more robust and replicable than results from traditional single-cohort studies, potentially paving the way for uncovering stable biomarkers for clinical diagnosis and intervention. However, advantages also accompany these challenges:
 
----- **_Data harmonization_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
+---- **_Meta-Analysis & Mega-Analysis_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Meta_Mega.png?raw=true)
 
@@ -45,6 +45,10 @@ IBMMA can run multiple statistical models by calling released R and Python packa
 # How to Install It?
 
 IBMMA is still in its early stages of development. Users should download the entire folder and extract it to a location on their computer (the working space). Ensure that this folder contains a file called '**_path_para.xlsx_**' (a template for users to modify according to their own data), a file called '**_ibmma.py_**', and a folder called '**_SDL_functions_**'.
+
+----**_Demographic & Clinical File Path_**. 
+
+![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_demographic_clinical.png?raw=true)
 
 # How Does It Work?
 
