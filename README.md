@@ -172,6 +172,8 @@ Several modules and functions have been planned to be incorporated into IBMMA in
 
 ---- Collaboration with **_DS (Deep Simple)_** package (https://github.com/sundelinustc/Deep_Simple) to promote manuscript preparations.
 
+---- Distributed computing resources. Take advantage of parallel processing across multiple nodes or cores using R packages such as Rmpi (https://cran.r-project.org/web/packages/Rmpi/index.html).
+
 
 
 
