@@ -3,6 +3,7 @@ import pandas as pd # for working with csv files
 import multiprocessing as mp # for parallel processing
 from SDL_functions.startup import Clean
 from SDL_functions.mega_analysis import Mega
+from SDL_functions.measures import Measures
 
 class IBMMA:
     def __init__(self, file_path_para = 'path_para.xlsx', new_subjects=False, num_processes=None):
@@ -11,7 +12,7 @@ class IBMMA:
         self.Clean = Clean(self.file_path_para) # self.clean.df_all_sheets contains all sheets of path_para.xlsx
         self.Subjects = os.path.join('Processes', 'Subjects.csv') # path to Subjects.csv
         self.df_subjects = [self.Clean.match_files() if (not os.path.isfile(self.Subjects)) or new_subjects else pd.read_csv(self.Subjects)] # Load existed Subjects.csv OR make it if it does not exist or new_subjects==True
-        
+    
     def pipeline(self):
         """
         The pipeline to run steps one-by-one.
@@ -20,9 +21,16 @@ class IBMMA:
         for _, data_pattern in self.Clean.df_all_sheets['data_pattern'].iterrows():
             process_dir  = os.path.join('Processes', data_pattern['NAME'])
             result_dir   = os.path.join('Results', data_pattern['NAME'])
+            my_rois      = data_pattern.get('MYROI', None)
             num_segments = 50 # default = 50 segments
             
-            Mega().mask(self.Subjects, 'FULL_PATH_DATA_'+data_pattern['NAME'], 'FULL_PATH_MASK_'+data_pattern['NAME'], process_dir)
+            # Measures before statistics if needed
+            if data_pattern['MEASURE']:
+                Measures().pipeline(self.Subjects, data_pattern)
+            else:
+                Mega().mask(self.Subjects, 'FULL_PATH_DATA_'+data_pattern['NAME'], 'FULL_PATH_MASK_'+data_pattern['NAME'], process_dir)
+
+            # Preparation for statistical analysis
             Mega().flatten(self.Subjects, 'FULL_PATH_DATA1_'+data_pattern['NAME'], process_dir)
             Mega().segment(process_dir, num_segments) 
             
@@ -34,11 +42,13 @@ class IBMMA:
                 
                 Mega().stat(process_dir, os.path.join(process_dir, 'stats'), path_R_stat, self.Subjects, model_name, model_formula)
                 Mega().concatenate(process_dir, result_dir, model_name)
-                Mega().reverse(process_dir, result_dir, model_name)
+                Mega().reverse(process_dir, result_dir, model_name, my_rois)
+                
                 # Mega().p_correct(result_dir, model_name)
 
 if __name__ == "__main__": 
     
-    ibmma = IBMMA(new_subjects=False)
+    ibmma = IBMMA(new_subjects=False, num_processes=None)
     ibmma.pipeline()   
     print("\n\n Finished !!!\n\n")
+    pass

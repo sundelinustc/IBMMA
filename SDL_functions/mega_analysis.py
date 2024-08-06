@@ -101,8 +101,11 @@ def flatten_single(args):
     else:
         # load .csv file
         data = np.genfromtxt(data_file_path, delimiter='\t')
+        if np.isnan(data).all():
+            data = np.genfromtxt(data_file_path, delimiter=',')
+        
         # Check if the array is a symmetric matrix
-        is_symmetric = np.allclose(data, data.T, equal_nan=True)
+        is_symmetric = np.allclose(data, data.T, equal_nan=True) if data.ndim == 2 and data.shape[0] == data.shape[1] else None
         
         # Symmetric matrix
         if is_symmetric:
@@ -193,9 +196,11 @@ def r_script(r_script_path, args):
     try:
         subprocess.check_call(["R", "--version"]) # check if R is installed
     except:
-        command = 'module load R/latest' # May need to mannually input before running code
-        subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+        # command = 'module load R/latest' # May need to mannually input before running code
+        # command = 'module load /usr/local/packages/R/4.2.2/bin/R'
+        # subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pass 
+    
     # print information
     t0 = time.time() # start time
     print(f"\n-- R script executor (time consuming for large datasets) ... ")
@@ -208,11 +213,12 @@ def r_script(r_script_path, args):
     # Convert arguments to string
     str_args = [str(arg) for arg in args]
 
-    # Construct the command
-    cmd = ['Rscript', os.path.abspath(r_script_path)] + str_args
-
-    # Execute the command
-    subprocess.run(cmd, stdout=subprocess.PIPE)
+    try:
+        cmd = ['Rscript', os.path.abspath(r_script_path)] + str_args # Construct the command
+        subprocess.run(cmd, stdout=subprocess.PIPE) # Execute the command
+    except:
+        cmd = ['/usr/local/packages/R/4.2.2/bin/Rscript', os.path.abspath(r_script_path)] + str_args  # Construct the command (for Duke BIAC cluster)
+        subprocess.run(cmd, stdout=subprocess.PIPE) # Execute the command
         
     # print ending info
     print(f"-- R script executor completed!\nTime elapsed (in secs): {time.time()-t0}\n")
@@ -249,16 +255,76 @@ def concat_csv_single(args):
                 if segment_f.startswith('V') and os.path.isdir(os.path.join(folder_path, 'stats', segment_f))]
         out_dir = os.path.join(result_dir, meta_mega, tidy_glance, subfolder1, subfolder2) # path to the output folder
 
+    # Remove non-existent files
+    list_files = [file for file in list_files if os.path.exists(file)]
+
     # Concatenate csv files
     if list_files:
         combined_csv = pd.concat([pd.read_csv(f) for f in list_files])
     
-    # Sort dataframe based on 'Yvar'
-    df_sorted = combined_csv.sort_values(by='Yvar',  key=lambda x: [int(''.join(char for char in str(y) if char.isdigit())) for y in x])
-    
-    # Save into new csv file
-    [os.makedirs(out_dir, exist_ok=True) for _ in (True,) if not os.path.exists(out_dir)] # make the output folder if it does not exist
-    df_sorted.to_csv(os.path.join(out_dir, model_name + '.csv'), index=False) # save into csv file with model name
+        # Sort dataframe based on 'Yvar'
+        df_sorted = combined_csv.sort_values(by='Yvar',  key=lambda x: [int(''.join(char for char in str(y) if char.isdigit())) for y in x])
+        
+        # Save into new csv file
+        [os.makedirs(out_dir, exist_ok=True) for _ in (True,) if not os.path.exists(out_dir)] # make the output folder if it does not exist
+        df_sorted.to_csv(os.path.join(out_dir, model_name + '.csv'), index=False) # save into csv file with model name
+
+# def concat_csv_single(args):
+#     try:
+#         # Unpack arguments
+#         folder_path, result_dir, model_name, meta_mega, tidy_glance, subfolder1, subfolder2 = args
+
+#         # Debug print
+#         print(f"Arguments: {args}")
+
+#         # Construct base path
+#         base_path = os.path.join(folder_path, 'stats')
+#         if not os.path.exists(base_path):
+#             print(f"Base path does not exist: {base_path}")
+#             return
+
+#         # List all csv files of interest
+#         if tidy_glance == 'GLANCE':
+#             list_files = [
+#                 os.path.join(base_path, segment_f, meta_mega, tidy_glance, subfolder1, f"{model_name}.csv")
+#                 for segment_f in os.listdir(base_path)
+#                 if segment_f.startswith('V') and os.path.isdir(os.path.join(base_path, segment_f))
+#             ]
+#             out_dir = os.path.join(result_dir, meta_mega, tidy_glance, subfolder1)
+#         else:
+#             list_files = [
+#                 os.path.join(base_path, segment_f, meta_mega, tidy_glance, subfolder1, subfolder2, f"{model_name}.csv")
+#                 for segment_f in os.listdir(base_path)
+#                 if segment_f.startswith('V') and os.path.isdir(os.path.join(base_path, segment_f))
+#             ]
+#             out_dir = os.path.join(result_dir, meta_mega, tidy_glance, subfolder1, subfolder2)
+
+#         # Debug print
+#         print(f"Number of files found: {len(list_files)}")
+#         print(f"First file path: {list_files[0] if list_files else 'No files found'}")
+
+#         # Concatenate csv files
+#         if list_files:
+#             combined_csv = pd.concat([pd.read_csv(f) for f in list_files if os.path.exists(f)])
+            
+#             # Sort dataframe based on 'Yvar'
+#             df_sorted = combined_csv.sort_values(by='Yvar', key=lambda x: [int(''.join(char for char in str(y) if char.isdigit())) for y in x])
+            
+#             # Create output directory if it doesn't exist
+#             os.makedirs(out_dir, exist_ok=True)
+            
+#             # Save into new csv file
+#             output_file = os.path.join(out_dir, f"{model_name}.csv")
+#             df_sorted.to_csv(output_file, index=False)
+            
+#             print(f"Saved concatenated file to: {output_file}")
+#         else:
+#             print("No files found to concatenate.")
+
+#     except Exception as e:
+#         print(f"Error in concat_csv_single: {str(e)}")
+#         raise
+
 
 # Function to correct for multiple comparisons using FDR method
 def p_correct_fdr_single(file):
@@ -419,7 +485,73 @@ def reverse_single(args):
     else:
         pass
 
-        
+
+# Function to make roi results report
+def roi_results(model_name, csv_files, my_rois):
+    """
+    Combine the seperated results files into one per model
+    
+    Args:
+        model_name (strings):           Model name, e.g., "model_01".
+        csv_files (list of strings):    A list of paths to the csv files of statistical outputs (TIDY & GLANCE).
+        my_roi_file (dataframe):        Dataframe of ROI defination.
+
+    Outputs:
+        One .xlsx file per model, and one sheet per effect.
+    """
+    
+    # Labels of all ROIs
+    label_rois = my_rois.Label.tolist()
+    
+    # Create dictionary using dictionary comprehension
+    dict_labels = {'V'+str(index): value for index, value in enumerate(label_rois)}
+    
+    # Files of TIDY and GLANCE
+    TIDY_files   = [file for file in csv_files if os.path.basename(file).startswith(model_name) and file.endswith('.csv') and os.path.normpath(file).split(os.sep)[-4]=='TIDY'] 
+    GLANCE_files = [file for file in csv_files if os.path.basename(file).startswith(model_name) and file.endswith('.csv') and os.path.normpath(file).split(os.sep)[-3]=='GLANCE']
+    
+    # Output file path
+    common_path = os.path.commonpath(csv_files) # Get the common parts of the paths
+    out_file = os.path.join(common_path, 'ROIs_Results_'+model_name+'.xlsx')
+
+    # GLANCE: Loop through the files and read each into a dataframe
+    df_GLANCE = pd.DataFrame() # Initialize an empty dataframe
+    for file in GLANCE_files:
+        df = pd.read_csv(file)
+        if df_GLANCE.empty:
+            df_GLANCE = df
+        else:
+            # Merge on the common variable 'Yvar'
+            df_GLANCE = pd.merge(df_GLANCE, df, on='Yvar')
+    
+    # TIDY: Loop through the files and read each into a dataframe
+    # # Unique effects
+    # effects = set(os.path.basename(os.path.dirname(file_path)) for file_path in TIDY_files)
+    # Group csv files by parent folder (TIDY effects)
+    folders = {} # dictionary, folder name: files within this folder
+    for csv_file in TIDY_files:
+        parent_folder = os.path.basename(os.path.dirname(csv_file)) # Get the 1st parent folder name
+        if parent_folder not in folders:
+            folders[parent_folder] = []
+        folders[parent_folder].append(csv_file)
+
+    # Merge csv files in the same folder into one dataframe
+    with pd.ExcelWriter(out_file) as writer:
+        for folder_name, ffiles in folders.items():
+            df_list = [pd.read_csv(file) for file in ffiles] # Get a list of dataframes, one per TIDY output
+            df_TIDY = pd.DataFrame() # Initialize an empty dataframe
+            df_TIDY = pd.concat(df_list).groupby('Yvar').first().reset_index() # Merge the list of dataframes using the common variable "Yvar"
+            df_TIDY = df_TIDY.merge(df_GLANCE, on='Yvar', how='inner') # merge TIDY & GLANCE
+            df_TIDY['Yvar'] = df_TIDY['Yvar'].replace(dict_labels) # Replace Yvar with ROI labels
+            df_TIDY = df_TIDY.sort_values(by='p.value', ascending=True)
+            # Save 
+            if not df_TIDY.empty:
+                df_TIDY.to_excel(writer, sheet_name=folder_name, index=False)
+                print(f'ROI statistical results saved in sheet={folder_name} in file={out_file}\n')
+            else:
+                print(f'No data for {folder_name}, skipping...\n')
+
+           
         
         
 # Class for Mega analysis
@@ -507,7 +639,7 @@ class Mega:
             os.makedirs(output_dir)
         
         # Read the data file paths and filename IDs from the CSV file
-        subjects_df = pd.read_csv(subjects_csv_path)
+        subjects_df = pd.read_csv(subjects_csv_path, na_values='NaN')
         # remove rows that are empty in the columns of fID & col_name
         subjects_df.dropna(subset=['fID', col_name], inplace=True)
 
@@ -546,11 +678,13 @@ class Mega:
         # Get all input files in the specified directory (ending with '.csv')
         input_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.endswith('.csv')]
         
-        # Total length of the 1st file (liading the header but not exact data to save time)
+        # Total length of the 1st file (loading the header but not exact data to save time)
         total_length = len(pd.read_csv(input_files[0], nrows=1, header=None).columns)
         
         # The size of each segment
         # This part ensures that the division will result in a ceiling value rather than a floor value
+        if total_length < 1000:
+            num_segments = 1
         segment_size = (total_length + num_segments - 1) // num_segments
         os.makedirs(output_folder, exist_ok=True)
 
@@ -623,8 +757,8 @@ class Mega:
         
         Args:
             folder_path (str): Path to the folder of the target data type.
-            result_dir (str): Path to the folder of statistical outputs of the target data type.
-            model_name (str): name of the model, e.g., 'model_01'
+            result_dir (str):  Path to the folder of statistical outputs of the target data type.
+            model_name (str):  Name of the model, e.g., 'model_01'
         
         Outputs:
             save concatenated statistical outputs (TIDY & GLANCE).
@@ -647,8 +781,8 @@ class Mega:
                    for subfolder2 in subfolders_TIDY2]
         my_args = args_GLANCE + args_TIDY # combine the lists of tuples
         
-        # # For test purpose only !!
-        # concat_csv_single(my_args[10]) 
+        # For test purpose only !!
+        concat_csv_single(my_args[9]) 
         
         # Parallel processing
         with mp.Pool(processes=self.num_processes) as pool:
@@ -657,16 +791,17 @@ class Mega:
         # print ending info
         print(f"Concatenating CSV files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def reverse(self, process_dir, result_dir, model_name):
+    def reverse(self, process_dir, result_dir, model_name, my_rois_path):
         """
         (1) FDR correction (default) for p-values; 
         (2) Negatively log10 transformed p-values; 
         (3) Reverse the concatenate CSV files of statistical outputs back to its original dimensions.
         
         Args:
-            folder_path (str): Path to the folder of the target data type.
-            result_dir (str): Path to the folder of statistical outputs of the target data type.
-            model_name (str): name of the model, e.g., 'model_01'
+            folder_path (str):  Path to the folder of the target data type.
+            result_dir (str):   Path to the folder of statistical outputs of the target data type.
+            model_name (str):   Name of the model, e.g., 'model_01'.
+            my_rois_path (str): Path to the file of my_rois, e.g., 'MY_ROIs.xlsx'.
         
         Outputs:
             save reversed concatenated statistical outputs (TIDY & GLANCE).
@@ -745,7 +880,8 @@ class Mega:
         else:
             # Check if the array is a symmetric matrix
             data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
-            is_symmetric = np.allclose(data, data.T, equal_nan=True)
+            # is_symmetric = np.allclose(data, data.T, equal_nan=True)
+            is_symmetric = np.allclose(data, data.T, equal_nan=True) if data.ndim == 2 and data.shape[0] == data.shape[1] else None
             file_type = 'Symmetric Matrix' if is_symmetric else 'CSV' # file type for .csv files
             sample_file = None
 
@@ -753,12 +889,23 @@ class Mega:
         my_args = [(csv_file, total_length, file_type, sample_file)
                    for csv_file in csv_files]
         
-        # For test purpose only !!
-        reverse_single(my_args[10])
+        # # For test purpose only !!
+        # reverse_single(my_args[10])
         
         # Parallel processing
         with mp.Pool(processes=self.num_processes) as pool:
             pool.map(reverse_single, my_args) 
             
-        # print ending info
+        # Print ending info
         print(f"Reverse statistical outputs back to original dimensions completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        
+        # Make results report (one .xlsx file per model, one sheet per effect)
+        # Check if the data in the masked folder is 1D (i.e., ROI-based data)
+        data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
+        if data.ndim == 1:
+            my_rois = pd.read_excel(my_rois_path, sheet_name='MY_ROIs', dtype='object')
+            roi_results(model_name, csv_files, my_rois)
+        
+        # Print ending info
+        print(f"ROI results report completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+ 
