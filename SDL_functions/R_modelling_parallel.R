@@ -17,15 +17,15 @@
 # This script is the property of Delin Sun.
 # No part of this script may be reproduced in any form without the prior permission of Delin Sun.
 
-# for test purpose only
-xfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/Subjects.csv'
-# yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/corrMatrix_atlas-schaefer2011Combined/segmented/V47000_48880.csv'
-yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/fALFF_alff/segmented/V757435_779076.csv'
-# out_dir <- 'Processes/corrMatrix_atlas-schaefer2011Combined/stats/V47000_48880/Mega'
-out_dir <- 'Processes/fALFF_alff/stats/V757435_779076/Mega'
-model_name <- 'Model_02'
-# formula <- "lm(Yvar ~ GROUP * AGE + SEX)"
-formula <- 'lmer(Yvar ~ GROUP * AGE + SEX + (1|SITE))'
+# # for test purpose only
+# xfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/Subjects.csv'
+# # yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/corrMatrix_atlas-schaefer2011Combined/segmented/V47000_48880.csv'
+# yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/fALFF_alff/segmented/V757435_779076.csv'
+# # out_dir <- 'Processes/corrMatrix_atlas-schaefer2011Combined/stats/V47000_48880/Mega'
+# out_dir <- 'Processes/fALFF_alff/stats/V757435_779076/Mega'
+# model_name <- 'Model_02'
+# # formula <- "lm(Yvar ~ GROUP * AGE + SEX)"
+# formula <- 'lmer(Yvar ~ GROUP * AGE + SEX + (1|SITE))'
 
 # (0) get command line arguments
 args <- commandArgs(trailingOnly = TRUE)

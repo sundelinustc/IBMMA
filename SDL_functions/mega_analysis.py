@@ -18,11 +18,22 @@ def mask_single(args):
     Args:
         args (tuple): A tuple containing the data file path, mask file path, the output directory, and the filename ID.
     """
+    # Add type checking and debugging information
+    if not isinstance(args, tuple) or len(args) != 4:
+        print(f"Error: args should be a tuple of 4 elements, received: {args}")
+        return
+
     data_file_path, mask_file_path, output_dir, filename_id = args
 
+    # Print debugging information
+    print(f"Debug: data_file_path = {data_file_path}, type = {type(data_file_path)}")
+    print(f"Debug: mask_file_path = {mask_file_path}, type = {type(mask_file_path)}")
+    print(f"Debug: output_dir = {output_dir}, type = {type(output_dir)}")
+    print(f"Debug: filename_id = {filename_id}, type = {type(filename_id)}")
+
     # Check if the data file exists
-    if not os.path.isfile(data_file_path):
-        print(f"Warning: data file '{data_file_path}' does not exist.")
+    if not isinstance(data_file_path, str) or not os.path.isfile(data_file_path):
+        print(f"Error: Invalid data file path '{data_file_path}'.")
         return
 
     # Get the data file basename & extension
@@ -42,45 +53,77 @@ def mask_single(args):
         except (OSError, subprocess.CalledProcessError) as e:
             print(f"Error occurred while copying file: {e}")     
     else:
+        # Check if the mask file exists
+        if not isinstance(mask_file_path, str) or not os.path.isfile(mask_file_path):
+            print(f"Error: Invalid mask file path '{mask_file_path}'.")
+            return
+
         # Apply mask file to the data file 
         # If nifti image
         if file_extension.lower() == '.nii' or file_extension.lower() == '.nii.gz':
-            # load data file: NIfTI image
-            img = nib.load(data_file_path)
-            img_data = img.get_fdata()
-            # load mask file: NIfTI image
-            mask = nib.load(mask_file_path)
-            mask_data = mask.get_fdata() # 1=to be included, 0=to be excluded
-            # keep only the first a few dimensions of img_data to match the dimensions of mask_data
-            # this is for the cases such as img_data.ndim==[97,115,97,1] & mask_data.ndim==[97,115,97]
-            if img_data.ndim > mask_data.ndim:
-                # Create a slice object to select the first a few dimensions
-                slice_obj = tuple([slice(None)] * mask_data.ndim + [0] * (img_data.ndim - mask_data.ndim))
-                img_data_x = img_data[slice_obj]
-            else:
-                img_data_x = img_data
-            # apply the mask
-            masked_data = np.where(mask_data == 1, img_data_x, np.nan)
-            # create a new NIfTI image with the masked data
-            masked_img = nib.Nifti1Image(masked_data, img.affine, img.header)
-            # Save the output
-            nib.save(masked_img, out_file_path)
-            print(f"Masked output: {out_file_path}") # print information
+            try:
+                # load data file: NIfTI image
+                img = nib.load(data_file_path)
+                img_data = img.get_fdata()
+                # load mask file: NIfTI image
+                mask = nib.load(mask_file_path)
+                mask_data = mask.get_fdata() # 1=to be included, 0=to be excluded
+                # keep only the first a few dimensions of img_data to match the dimensions of mask_data
+                # this is for the cases such as img_data.ndim==[97,115,97,1] & mask_data.ndim==[97,115,97]
+                if img_data.ndim > mask_data.ndim:
+                    # Create a slice object to select the first a few dimensions
+                    slice_obj = tuple([slice(None)] * mask_data.ndim + [0] * (img_data.ndim - mask_data.ndim))
+                    img_data_x = img_data[slice_obj]
+                else:
+                    img_data_x = img_data
+                # apply the mask
+                masked_data = np.where(mask_data == 1, img_data_x, np.nan)
+                # create a new NIfTI image with the masked data
+                masked_img = nib.Nifti1Image(masked_data, img.affine, img.header)
+                # Save the output
+                nib.save(masked_img, out_file_path)
+                print(f"Masked output: {out_file_path}") # print information
+            except Exception as e:
+                print(f"Error occurred while processing NIfTI image: {e}")
         else:
             # load data file: .csv, .tsv
-            data = np.genfromtxt(data_file_path, delimiter='\t')
-            # load mask file: .csv, .tsv
-            pass
-        
-# Function to flatten a high-dimensional data & save it into a one-row csv file
-def flatten_single(args):
-    """
-    Flatten high-dimensional data (e.g. 2D correlation matrix & 3D nifti) into a one-dimensional NumPy array and save it as a CSV file.
+            try:
+                data = np.genfromtxt(data_file_path, delimiter='\t')
+                # load mask file: .csv, .tsv
+                # TO BE DONE: Add code here for processing .csv or .tsv files
+                print("Processing .csv or .tsv files not implemented yet.")
+            except Exception as e:
+                print(f"Error occurred while processing .csv or .tsv file: {e}")
+
+# Function to apply a dataframe of mask to a single csv file & update this csv file
+def apply_mask_to_single_csv_file(args):
+    """Apply mask to a single csv file & save the new csv file with the same filename
 
     Args:
-        args (tuple): A tuple containing the data file path, the output directory, and the filename ID.
+        csv_file (str): Path to a single csv file contains at least a column of 'Yvar'.
+        mask_yvar (list): List of Yvars that are 'V'+numbers.
+
+    Output:
+        Updated CSV file that conatins elements with the same 'Yvar' in mask_yvar.
     """
-    data_file_path, output_dir, filename_id = args
+    csv_file, mask_yvar = args
+    df_csv = pd.read_csv(csv_file)
+    df_csv[df_csv['Yvar'].isin(mask_yvar)].to_csv(csv_file, index=False)
+    print(f"Updated CSV file using inclusive mask: {csv_file}.")
+           
+# Function to flatten a high-dimensional data & save into multiple one-row csv files
+def flatten_single(args):
+    """
+    Flatten high-dimensional data (e.g. 2D correlation matrix & 3D nifti) into 
+    a one-dimensional NumPy array and save it into multiple CSV file.
+
+    Args:
+        args (tuple): A tuple containing the data file path, the output directory, the filename ID, and the number of segments.
+    
+    Returns:
+        A dataframe (for a single mask without num_segments): Yvar - 'V'+number; mask -- values of flattened mask:
+    """
+    data_file_path, output_dir, filename_id, num_segments = args
 
     # Check if the data file exists
     if not os.path.isfile(data_file_path):
@@ -101,8 +144,11 @@ def flatten_single(args):
     else:
         # load .csv file
         data = np.genfromtxt(data_file_path, delimiter='\t')
+        if np.isnan(data).all():
+            data = np.genfromtxt(data_file_path, delimiter=',')
+        
         # Check if the array is a symmetric matrix
-        is_symmetric = np.allclose(data, data.T, equal_nan=True)
+        is_symmetric = np.allclose(data, data.T, equal_nan=True) if data.ndim == 2 and data.shape[0] == data.shape[1] else None
         
         # Symmetric matrix
         if is_symmetric:
@@ -114,108 +160,107 @@ def flatten_single(args):
             # Asymmetric matrix
             flattened_data = data.flatten()
 
-    # Construct the CSV file path using the filename ID
-    csv_file_path = os.path.join(output_dir, f"{filename_id}.csv")
+    if num_segments is None:
+        # Specially used for an inclusive mask (no segmentation needed)
+        df = pd.DataFrame({
+        'Yvar': [f'V{i}' for i in range(len(flattened_data))],
+        'mask': flattened_data
+         })
+        # remove rows of 0 (out of mask)
+        df = df[df['mask'] != 0]
+        # return df
+        return df
+    else:
+        # For all data
+        # Construct the folder path (using the filename ID) to contain segmented csv files
+        csv_folder_path = os.path.join(output_dir, f"{filename_id}")
+        os.makedirs(csv_folder_path, exist_ok=True)
 
-    # Save the flattened data as a CSV file
-    # including reshape the data to have one row and multiple columns
-    np.savetxt(csv_file_path, flattened_data.reshape(1, -1), delimiter=",")
-    print(f"Flattened data saved as {csv_file_path}")
+        # Save the flattened data as a CSV file
+        # including reshape the data to have one row and multiple columns
+        # np.savetxt(csv_file_path, flattened_data.reshape(1, -1), delimiter=",")
+        
+        # Calculate the size of each segment
+        segment_size = len(flattened_data) // num_segments
+        
+        # Split the array, create filenames, and save segments using list comprehension
+        [np.savetxt(
+            os.path.join(csv_folder_path, f"V{i*segment_size}_{(i+1)*segment_size if i < num_segments-1 else len(flattened_data)}.csv"),
+            flattened_data[i*segment_size:(i+1)*segment_size if i < num_segments-1 else len(flattened_data)].reshape(1, -1),
+            delimiter=',', fmt='%g'
+        ) for i in range(num_segments)]
+        
+        print(f"Flattened data saved in {csv_folder_path}")
 
-# Function to get a segment of an input data file
-def segment_data_single(args):
-    """Get the segment (with specified start and end) from the input file, and return a dataframe (with a columns of fID)
+# Stack (Vertically combine) segmented csv files into a new csv
+def segment_stack_single(args):
+    
+    output_file, list_zip = args
+    
+    def read_csv_with_fID(single_zip):
+        # Extract the parent folder name as the subject ID
+        # fID = os.path.basename(os.path.dirname(file_path))
+        
+        # Read the CSV file
+        df = pd.read_csv(single_zip[0], header=None)
+        
+        # Add the fID as the first column
+        df.insert(0, 'fID', single_zip[1])
+        
+        return df
 
-    Args:
-        input_file (str): Full path to a csv file of flattened data.
-        start (int): A number indicating the start location of a segment in a flattened data file.
-        end (int):   A number indicating the end   location of a segment in a flattened data file.
+    # Use a generator expression to read CSV files with fIDs
+    df_list = (read_csv_with_fID(f) for f in list_zip)
 
-    Returns:
-        df: A one row dataframe (fID & data segment)
-    """
-    # Arguments
-    input_file, start, end = args
-    
-    # Base name of inpput file
-    filename = os.path.basename(input_file)
-    
-    # Read the specified segment (with start & end) from the input file
-    with open(input_file, 'r') as f:
-        df = pd.read_csv(f, header=None, usecols=[i for i in range(start, end)])
-    
-    # Insert a new column 'fID' as the first column with a string value
-    fID = filename.replace('.csv', '')
-    df.insert(0, 'fID', fID)
-    
-    # return
-    return df
+    # Concatenate all dataframes
+    combined_df = pd.concat(df_list, ignore_index=False)
 
-# Function to segment data in parallel & combine the segments into a csv file
-def segment_data_parallel(input_files, output_folder, start, end, num_processes):
-    """
-    Combine the same segment (with specified start and end) across flattened data files into a dataframe (with a column fID) and save it into a csv file.
+    # Extract start_index and end_index from the output filename
+    start_idx, end_idx = [int(s) for s in os.path.basename(output_file).replace('.csv', '').replace('V', '').split('_')]
 
-    Args:
-        input_files (list[str]): List if csv files of flattened data.
-        output_folder (str): Path to the folder containing outputs.
-        start (int): A number indicating the start location of a segment in a flattened data file.
-        end (int):   A number indicating the end   location of a segment in a flattened data file.
-        num_processes: Number of CPUs
+    # Create new column names
+    new_columns = ['fID'] + [f'V{i}' for i in range(start_idx, end_idx + 1)] # include the start_idx but NOT the end_idx according to Python rule
+
+    # Rename columns, ensuring we don't exceed the number of columns in the DataFrame
+    combined_df.columns = new_columns[:len(combined_df.columns)]
     
-    Output:
-        A csv file of all segments (1 row per file) & a column of fID
-    """
-    
-    # Arguments for parallel processing
-    my_args = [(file, start, end) for file in input_files]
-    
-    # # For test purpose only !!
-    # segment_data_single(my_args[0])
-    
-    # Run in parallel
-    # using fewer CPUs to avoid memory problems
-    with mp.Pool(processes=num_processes//3) as pool:
-        dfs = pool.map(segment_data_single, my_args)
-    df = pd.concat(dfs) # concatenate multiple dataframes vertically
-    
-    # Rename the columns
-    df.columns = ['fID' if col == 'fID' else 'V' + str(col) for col in df.columns] # Rename the columns using the new dictionary
-    
-    # Save csv file
-    output_file = os.path.join(output_folder, f"V{start}_{end}.csv")
-    df.to_csv(output_file, index=False)
+    # Ensure the parent directory exists
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        
+    # Save the combined dataframe to a CSV file
+    combined_df.to_csv(output_file, index=False)
+    print(f"Combined CSV saved to: {output_file}")
 
 
 # Function to run statistical analysis by calling R script
 def r_script(r_script_path, args):
-    # load lasted R module if it not installed 
-    try:
-        subprocess.check_call(["R", "--version"]) # check if R is installed
-    except:
-        command = 'module load R/latest' # May need to mannually input before running code
-        subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+    # Make sure R could be called
+    # For example, endter the below code in command line before running IBMMA:
+    # module load R/latest # for instance if you want to use the most updated R
+    # module load /usr/local/packages/R/4.2.2/bin/R # for instance if you want to use some specific version of R
+    
     # print information
     t0 = time.time() # start time
     print(f"\n-- R script executor (time consuming for large datasets) ... ")
-    print(f"xfile: {args[0]}")
-    print(f"yfile: {args[1]}")
-    print(f"out_dir: {args[2]}")
-    print(f"model_name: {args[3]}")
-    print(f"formula: {args[4]}")
+    lambda *args: [print(arg) for arg in args]
     
     # Convert arguments to string
     str_args = [str(arg) for arg in args]
 
-    # Construct the command
-    cmd = ['Rscript', os.path.abspath(r_script_path)] + str_args
-
-    # Execute the command
-    subprocess.run(cmd, stdout=subprocess.PIPE)
+    try:
+        cmd = ['Rscript', os.path.abspath(r_script_path)] + str_args # Construct the command
+        subprocess.run(cmd, stdout=subprocess.PIPE) # Execute the command
+    except:
+        cmd = ['/usr/local/packages/R/4.2.2/bin/Rscript', os.path.abspath(r_script_path)] + str_args  # Construct the command (for Duke BIAC cluster)
+        subprocess.run(cmd, stdout=subprocess.PIPE) # Execute the command
         
     # print ending info
     print(f"-- R script executor completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+
+# Function to run r_script that receives two inputs
+def r_script2(args):
+    arg1, file_args = args
+    return r_script(arg1, file_args)
 
 # Function to concatenate csv files
 def concat_csv_single(args):
@@ -249,16 +294,19 @@ def concat_csv_single(args):
                 if segment_f.startswith('V') and os.path.isdir(os.path.join(folder_path, 'stats', segment_f))]
         out_dir = os.path.join(result_dir, meta_mega, tidy_glance, subfolder1, subfolder2) # path to the output folder
 
+    # Remove non-existent files
+    list_files = [file for file in list_files if os.path.exists(file)]
+
     # Concatenate csv files
     if list_files:
         combined_csv = pd.concat([pd.read_csv(f) for f in list_files])
     
-    # Sort dataframe based on 'Yvar'
-    df_sorted = combined_csv.sort_values(by='Yvar',  key=lambda x: [int(''.join(char for char in str(y) if char.isdigit())) for y in x])
-    
-    # Save into new csv file
-    [os.makedirs(out_dir, exist_ok=True) for _ in (True,) if not os.path.exists(out_dir)] # make the output folder if it does not exist
-    df_sorted.to_csv(os.path.join(out_dir, model_name + '.csv'), index=False) # save into csv file with model name
+        # Sort dataframe based on 'Yvar'
+        df_sorted = combined_csv.sort_values(by='Yvar',  key=lambda x: [int(''.join(char for char in str(y) if char.isdigit())) for y in x])
+        
+        # Save into new csv file
+        [os.makedirs(out_dir, exist_ok=True) for _ in (True,) if not os.path.exists(out_dir)] # make the output folder if it does not exist
+        df_sorted.to_csv(os.path.join(out_dir, model_name + '.csv'), index=False) # save into csv file with model name
 
 # Function to correct for multiple comparisons using FDR method
 def p_correct_fdr_single(file):
@@ -300,13 +348,6 @@ def p_correct_fdr_single(file):
     
         # Save the updated DataFrame
         df1.to_csv(file1, index=False)
-        
-        # # Save
-        # parent_dir, file_name = os.path.split(file)
-        # new_parent_dir = parent_dir.replace("p.value", "p.value.fdr")
-        # os.makedirs(os.path.dirname(file1), exist_ok=True) # Create the directory if it doesn't exist
-        # file1 = os.path.join(parent_dir.replace("p.value", "p.value.fdr"), file_name)
-        # df1.to_csv(file1, index=False)
 
 # Function to get -log(p_val)
 def neg_log10_single(file):
@@ -368,7 +409,7 @@ def reverse_single(args):
         df1 = pd.concat([df, new_rows], ignore_index=True)
         
     # Sort df1 according to labels (ascending order)
-    df1['sort'] = df1['Yvar'].str.extract('(\d+)').astype(int)
+    df1['sort'] = df1['Yvar'].str.extract(r'(\d+)').astype(int)
     df1 = df1.sort_values('sort')
     df1 = df1.drop('sort', axis=1)
     
@@ -417,9 +458,75 @@ def reverse_single(args):
         fig.savefig(os.path.join(parent_path, 'FIG_'+basename+'.png'), dpi=300, bbox_inches='tight') # Save the plot to a PNG file
     
     else:
-        pass
+        print(f'Reverse problem: unknown data type, not .nii/.nii.gz, nor matrix\n')
 
-        
+
+# Function to make roi results report
+def roi_results(model_name, csv_files, my_rois):
+    """
+    Combine the seperated results files into one per model
+    
+    Args:
+        model_name (strings):           Model name, e.g., "model_01".
+        csv_files (list of strings):    A list of paths to the csv files of statistical outputs (TIDY & GLANCE).
+        my_roi_file (dataframe):        Dataframe of ROI defination.
+
+    Outputs:
+        One .xlsx file per model, and one sheet per effect.
+    """
+    
+    # Labels of all ROIs
+    label_rois = my_rois.Label.tolist()
+    
+    # Create dictionary using dictionary comprehension
+    dict_labels = {'V'+str(index): value for index, value in enumerate(label_rois)}
+    
+    # Files of TIDY and GLANCE
+    TIDY_files   = [file for file in csv_files if os.path.basename(file).startswith(model_name) and file.endswith('.csv') and os.path.normpath(file).split(os.sep)[-4]=='TIDY'] 
+    GLANCE_files = [file for file in csv_files if os.path.basename(file).startswith(model_name) and file.endswith('.csv') and os.path.normpath(file).split(os.sep)[-3]=='GLANCE']
+    
+    # Output file path
+    common_path = os.path.commonpath(csv_files) # Get the common parts of the paths
+    out_file = os.path.join(common_path, 'ROIs_Results_'+model_name+'.xlsx')
+
+    # GLANCE: Loop through the files and read each into a dataframe
+    df_GLANCE = pd.DataFrame() # Initialize an empty dataframe
+    for file in GLANCE_files:
+        df = pd.read_csv(file)
+        if df_GLANCE.empty:
+            df_GLANCE = df
+        else:
+            # Merge on the common variable 'Yvar'
+            df_GLANCE = pd.merge(df_GLANCE, df, on='Yvar')
+    
+    # TIDY: Loop through the files and read each into a dataframe
+    # # Unique effects
+    # effects = set(os.path.basename(os.path.dirname(file_path)) for file_path in TIDY_files)
+    # Group csv files by parent folder (TIDY effects)
+    folders = {} # dictionary, folder name: files within this folder
+    for csv_file in TIDY_files:
+        parent_folder = os.path.basename(os.path.dirname(csv_file)) # Get the 1st parent folder name
+        if parent_folder not in folders:
+            folders[parent_folder] = []
+        folders[parent_folder].append(csv_file)
+
+    # Merge csv files in the same folder into one dataframe
+    with pd.ExcelWriter(out_file) as writer:
+        for folder_name, ffiles in folders.items():
+            df_list = [pd.read_csv(file) for file in ffiles] # Get a list of dataframes, one per TIDY output
+            df_TIDY = pd.DataFrame() # Initialize an empty dataframe
+            df_TIDY = pd.concat(df_list).groupby('Yvar').first().reset_index() # Merge the list of dataframes using the common variable "Yvar"
+            df_TIDY = df_TIDY.merge(df_GLANCE, on='Yvar', how='inner') # merge TIDY & GLANCE
+            df_TIDY['Yvar'] = df_TIDY['Yvar'].replace(dict_labels) # Replace Yvar with ROI labels
+            df_TIDY = df_TIDY.sort_values(by='p.value', ascending=True)
+            # Save 
+            if not df_TIDY.empty:
+                df_TIDY.to_excel(writer, sheet_name=folder_name, index=False)
+                print(f'ROI statistical results saved in sheet={folder_name} in file={out_file}\n')
+            else:
+                print(f'No data for {folder_name}, skipping...\n')
+
+           
         
         
 # Class for Mega analysis
@@ -484,17 +591,18 @@ class Mega:
         # Print ending info
         print(f"Mask data files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def flatten(self, subjects_csv_path, col_name, process_dir):
+    def flatten(self, subjects_csv_path, col_name, process_dir, num_segments):
         """
-        Flatten any dimensions of data into 1D data.
+        Flatten any dimensions of data into multiple segmented 1D data.
         
         Args:
             subjects_csv_path (str): Path to the CSV file containing the data file paths and fIDs.
-            col_name: Name of the column that stroes the data file paths.
+            col_name (str): Name of the column that stroes the data file paths.
             process_dir (str): Path to the directory where the MEGA analysis should take.
+            num_segments (num): Number of segments
         
         Outputs:
-            save flattened data per file.
+            save flattened data files into folders per fID.
         """
         # print information
         t0 = time.time() # start time
@@ -507,12 +615,12 @@ class Mega:
             os.makedirs(output_dir)
         
         # Read the data file paths and filename IDs from the CSV file
-        subjects_df = pd.read_csv(subjects_csv_path)
+        subjects_df = pd.read_csv(subjects_csv_path, na_values='NaN')
         # remove rows that are empty in the columns of fID & col_name
         subjects_df.dropna(subset=['fID', col_name], inplace=True)
 
         # Aarguments
-        my_args = [(row[col_name], output_dir, row['fID']) for _, row in subjects_df.iterrows()]
+        my_args = [(row[col_name], output_dir, row['fID'], num_segments) for _, row in subjects_df.iterrows()]
         
         # # For test purpose only !!
         # flatten_single(my_args[0])
@@ -522,54 +630,51 @@ class Mega:
             pool.map(flatten_single, my_args)
             
         # print ending info
-        print(f"Flatten data files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        print(f"Flatten & segment data completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def segment(self, process_dir, num_segments):
+    def segment(self, process_dir):
         """
-        Segment each data file into several sections, and combine the same sgmentation across subjects into a new file.
+        Vertically combine the same sgmentation across subjects into a new file.
         
         Args:
-            subjects_csv_path (str): Path to the CSV file containing the data file paths and fIDs.
-            col_name: Name of the column that stroes the data file paths.
-            process_dir (str): Path to the directory where the MEGA analysis should take.
+            process_dir (str): Path to the processing directory for the corresponding data pattern.
         
         Outputs:
-            save segmented data files.
+            save combined segmented data files.
         """
         # Print information
         t0 = time.time() # start time
-        print(f"\nSegment flattened data & save into new csv files (time consuming for big datasets) ... ")
+        print(f"\nCombine flattened & segmented data to save into new csv files (time consuming for big datasets) ... ")
         
-        input_folder  = os.path.join(process_dir, 'flattened')
-        output_folder = os.path.join(process_dir, 'segmented')
+        # List of fID
+        list_fID = os.listdir(os.path.join(process_dir, 'flattened'))
+        # List of filenames of segments (based on the folder of the 1st fID)
+        list_segments = os.listdir(os.path.join(process_dir, 'flattened',list_fID[0]))
         
-        # Get all input files in the specified directory (ending with '.csv')
-        input_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.endswith('.csv')]
+        csv_files = [os.path.join(process_dir,'flattened',folder,list_segments[0]) for folder in list_fID]
         
-        # Total length of the 1st file (liading the header but not exact data to save time)
-        total_length = len(pd.read_csv(input_files[0], nrows=1, header=None).columns)
+        my_args = [
+            (
+                os.path.join(process_dir, 'segmented', segment),
+                list(zip(
+                    [os.path.join(process_dir, 'flattened', folder, segment) for folder in list_fID],
+                    list_fID
+                ))
+            )
+            for segment in list_segments
+        ]
         
-        # The size of each segment
-        # This part ensures that the division will result in a ceiling value rather than a floor value
-        segment_size = (total_length + num_segments - 1) // num_segments
-        os.makedirs(output_folder, exist_ok=True)
-
-        # Create a progress bar
-        start_time = time.time()  # Record the start time
-        progress_bar = tqdm(total=total_length, desc="Segment CSV files", bar_format="{l_bar}{bar} [{elapsed}<elapsed>]\n")
-
-        # Serial processing
-        for start in range(0, total_length, segment_size):
-            end = min(start + segment_size, total_length)
-            segment_data_parallel(input_files, output_folder, start, end, self.num_processes)
-            progress_bar.update(segment_size) # Update the progress bar
         
-        # Close the progress bar
-        progress_bar.close()
+        # # For test purpose only !!
+        # segment_stack_single(my_args[0])
         
+        # Parallel processing
+        with mp.Pool(processes=self.num_processes//2) as pool:
+            pool.map(segment_stack_single, my_args)
+            
         # print ending info
-        print(f"Segment completed!\nTime elapsed (in secs): {time.time()-t0}\n")
-
+        print(f"Stack segmented data completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        
     def stat(self, folder_path, output_dir, R_script_path, subjects_csv_path, model_name, model_txt):
         """
         Statistical analysis across all segmented data files
@@ -623,8 +728,8 @@ class Mega:
         
         Args:
             folder_path (str): Path to the folder of the target data type.
-            result_dir (str): Path to the folder of statistical outputs of the target data type.
-            model_name (str): name of the model, e.g., 'model_01'
+            result_dir (str):  Path to the folder of statistical outputs of the target data type.
+            model_name (str):  Name of the model, e.g., 'model_01'
         
         Outputs:
             save concatenated statistical outputs (TIDY & GLANCE).
@@ -648,7 +753,7 @@ class Mega:
         my_args = args_GLANCE + args_TIDY # combine the lists of tuples
         
         # # For test purpose only !!
-        # concat_csv_single(my_args[10]) 
+        # concat_csv_single(my_args[9]) 
         
         # Parallel processing
         with mp.Pool(processes=self.num_processes) as pool:
@@ -657,21 +762,58 @@ class Mega:
         # print ending info
         print(f"Concatenating CSV files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def reverse(self, process_dir, result_dir, model_name):
+    def reverse(self, process_dir, result_dir, model_name, mask1, path_R_pTFCE, my_rois_path):
         """
-        (1) FDR correction (default) for p-values; 
-        (2) Negatively log10 transformed p-values; 
-        (3) Reverse the concatenate CSV files of statistical outputs back to its original dimensions.
+        (1) Apply inclusive mask (if available) to restrict all statistical outputs within the mask
+        (2) FDR correction (default) for p-values; 
+        (3) Negatively log10 transformed p-values; 
+        (4) Reverse the concatenate CSV files of statistical outputs back to its original dimensions;
+        (5) pTFCE for .nii and .nii.gz.
         
         Args:
-            folder_path (str): Path to the folder of the target data type.
-            result_dir (str): Path to the folder of statistical outputs of the target data type.
-            model_name (str): name of the model, e.g., 'model_01'
+            process_dir (str):  Path to the folder of the target data type in the Process folder.
+            result_dir (str):   Path to the folder of statistical outputs of the target data type.
+            model_name (str):   Name of the model, e.g., 'model_01'.
+            mask1 (str):        Path to the whole brain inclusive mask image, e.g., '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/brain_mask.nii'.
+            path_R_pTFCE (str): Path to the R script for pTFCE on .nii and .nii.gz.
+            my_rois_path (str): Path to the file of my_rois, e.g., 'MY_ROIs.xlsx'.
         
         Outputs:
             save reversed concatenated statistical outputs (TIDY & GLANCE).
         """ 
-        ## (1) FDR correction (default)
+        ## (1) Inclusive mask (if available)
+        
+        # Print information
+        t0 = time.time() # start time
+        print(f"\nInclusive mask: {mask1}")
+        
+        # Flatten MASK1 if it is available
+        if mask1 is None:
+            pass
+        else: 
+            # flatten the mask1 & save into mask1.csv
+            df_mask = flatten_single((mask1,result_dir,'mask1',None))
+            # apply mask to all csv files & update the csv files
+            # apply_mask_to_csv_files(df_mask, result_dir)
+                # List all CSV files recursively
+            csv_files = [os.path.join(root, file) 
+                        for root, _, files in os.walk(result_dir) 
+                        for file in files if file.endswith('.csv')]
+            
+            # Prepare arguments for multiprocessing
+            args = [(csv_file, df_mask['Yvar'].tolist()) for csv_file in csv_files]
+            
+            # For test purpose only
+            apply_mask_to_single_csv_file(args[0])
+            
+            # Use parallel processing
+            with mp.Pool(processes=self.num_processes) as pool:
+                processed_files = pool.map(apply_mask_to_single_csv_file, args)
+            
+            print(f"Updated {len(processed_files)} CSV files using inclusive mask.")
+
+        
+        ## (2) FDR correction (default)
         
         # Print information
         t0 = time.time() # start time
@@ -694,7 +836,7 @@ class Mega:
         print(f"FDR correction completed!\nTime elapsed (in secs): {time.time()-t0}\n")
         
         
-        ## (2) Negatively log10 transformed p-values
+        ## (3) Negatively log10 transformed p-values
         
         # Print information
         t0 = time.time() # start time
@@ -716,7 +858,7 @@ class Mega:
         # print ending info
         print(f"Negatively log10 transformation completed!\nTime elapsed (in secs): {time.time()-t0}\n")
         
-        ## (3) Reverse
+        ## (4) Reverse
         # Print information
         t0 = time.time() # start time
         print(f"\nReverse statistical outputs back to original dimensions ... ")
@@ -727,9 +869,10 @@ class Mega:
              for file in files
              if file == (model_name + ".csv") or file == ("neg_log10_" + model_name + ".csv")]
         
-        # Info of flattened data
-        f_flattened = [os.path.join(process_dir, 'flattened', f) for f in os.listdir(os.path.join(process_dir, 'flattened')) if os.path.isfile(os.path.join(process_dir, 'flattened', f))]
-        total_length = len(pd.read_csv(f_flattened[0], nrows=1, header=None).columns) # total length (number of elements) of the 1st flattened file
+        # Length of flattened but not segmented data
+        numbers = [int(f.split('_')[1].split('.')[0]) for f in os.listdir(os.path.join(process_dir, 'segmented'))
+           if f.startswith('V') and f.endswith('.csv') and '_' in f and f.split('_')[1].split('.')[0].isdigit()]
+        total_length = max(numbers)
         
         # Info of the input data & flattened data
         f_data= [os.path.join(process_dir, 'masked', f) for f in os.listdir(os.path.join(process_dir, 'masked')) if os.path.isfile(os.path.join(process_dir, 'masked', f))]
@@ -745,7 +888,8 @@ class Mega:
         else:
             # Check if the array is a symmetric matrix
             data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
-            is_symmetric = np.allclose(data, data.T, equal_nan=True)
+            # is_symmetric = np.allclose(data, data.T, equal_nan=True)
+            is_symmetric = np.allclose(data, data.T, equal_nan=True) if data.ndim == 2 and data.shape[0] == data.shape[1] else None
             file_type = 'Symmetric Matrix' if is_symmetric else 'CSV' # file type for .csv files
             sample_file = None
 
@@ -753,12 +897,59 @@ class Mega:
         my_args = [(csv_file, total_length, file_type, sample_file)
                    for csv_file in csv_files]
         
-        # For test purpose only !!
-        reverse_single(my_args[10])
+        # # For test purpose only !!
+        # reverse_single(my_args[10])
         
         # Parallel processing
         with mp.Pool(processes=self.num_processes) as pool:
             pool.map(reverse_single, my_args) 
             
-        # print ending info
+        # Print ending info
         print(f"Reverse statistical outputs back to original dimensions completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        
+        
+        ## (5) pTFCE
+        # Print information
+        t0 = time.time() # start time
+        print(f"\npTFCE for .nii and .nii.gz ... ")
+        
+        # Folder of statistic
+        folder_statistic = os.path.join(result_dir,'Mega','TIDY','statistic')
+        
+        # List all .nii and .nii.gz recursively in TIFY/statistic folder of the given model
+        my_args = [
+            (
+                os.path.join(root, file),
+                os.path.join(root, file).replace("statistic", "df"),
+                mask1
+            )
+            for root, dirs, files in os.walk(folder_statistic)
+            for file in files
+            if file.startswith("OUT_" + model_name) and (file.endswith(".nii") or file.endswith(".nii.gz"))
+        ]
+        
+        # Parallel processing
+        # Prepare arguments for multiprocessing
+        pool_args = [(path_R_pTFCE, arg) for arg in my_args]
+        
+        # # # For test purpose only !!
+        # r_script2(pool_args[0])
+
+        # Parallel processing
+        with mp.Pool(processes=self.num_processes) as pool:
+            pool.map(r_script2, pool_args)
+            
+        # Print ending info
+        print(f"Reverse statistical outputs back to original dimensions completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+
+        
+        # # Make results report (one .xlsx file per model, one sheet per effect)
+        # # Check if the data in the masked folder is 1D (i.e., ROI-based data)
+        # data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
+        # if data.ndim == 1:
+        #     my_rois = pd.read_excel(my_rois_path, sheet_name='MY_ROIs', dtype='object')
+        #     roi_results(model_name, csv_files, my_rois)
+        
+        # # Print ending info
+        # print(f"ROI results report completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+ 
