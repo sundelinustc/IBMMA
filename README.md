@@ -160,7 +160,7 @@ Several modules and functions have been planned to be incorporated into IBMMA in
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Results.png?raw=true)
 
----- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images (https://spisakt.github.io/pTFCE/) and NBS for connection matrix will be added.
+---- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images (https://spisakt.github.io/pTFCE/) has been incorporated. NBS for connection matrix will be added.
 
 ---- Multiple data format. The current version is for the functional neuroimaging data (voxel-based images in *.nii.gz format or connectom-based matrix in .csv format) preprocessed by softwares such as HALFPIPE. The updated IBMMA version will have the ability to do analyses on any format of neuroimaging data, such as cortical thickness, surface area, and gyrification.
 
