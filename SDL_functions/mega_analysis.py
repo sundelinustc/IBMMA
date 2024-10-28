@@ -210,7 +210,8 @@ def segment_stack_single(args):
         return df
 
     # Use a generator expression to read CSV files with fIDs
-    df_list = (read_csv_with_fID(f) for f in list_zip)
+    # df_list = (read_csv_with_fID(f) for f in list_zip)
+    df_list = [read_csv_with_fID(f) for f in tqdm(list_zip, desc="Reading CSV files")]
 
     # Concatenate all dataframes
     combined_df = pd.concat(df_list, ignore_index=False)
@@ -651,19 +652,35 @@ class Mega:
         # List of filenames of segments (based on the folder of the 1st fID)
         list_segments = os.listdir(os.path.join(process_dir, 'flattened',list_fID[0]))
         
-        csv_files = [os.path.join(process_dir,'flattened',folder,list_segments[0]) for folder in list_fID]
+        # csv_files = [os.path.join(process_dir,'flattened',folder,list_segments[0]) for folder in list_fID]
+        # List all csv files in a given subject's folder of flattened data files
+        # csv_files = [os.path.join(process_dir, 'flattened', folder, list_segments[0]) 
+        #     for folder in list_fID 
+        #     if not folder.startswith('.') and list_segments[0] and not list_segments[0].startswith('.')]
         
+        # my_args = [
+        #     (
+        #         os.path.join(process_dir, 'segmented', segment),
+        #         list(zip(
+        #             [os.path.join(process_dir, 'flattened', folder, segment) for folder in list_fID],
+        #             list_fID
+        #         ))
+        #     )
+        #     for segment in list_segments
+        # ]
         my_args = [
             (
                 os.path.join(process_dir, 'segmented', segment),
                 list(zip(
-                    [os.path.join(process_dir, 'flattened', folder, segment) for folder in list_fID],
-                    list_fID
+                    [os.path.join(process_dir, 'flattened', folder, segment) 
+                        for folder in list_fID 
+                        if not folder.startswith('.') and not segment.startswith('.')],
+                    [folder for folder in list_fID if not folder.startswith('.')]
                 ))
             )
-            for segment in list_segments
-        ]
-        
+            for segment in list_segments 
+            if not segment.startswith('.')
+            ]
         
         # # For test purpose only !!
         # segment_stack_single(my_args[0])
