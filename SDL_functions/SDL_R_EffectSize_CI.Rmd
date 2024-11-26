@@ -1,0 +1,98 @@
+---
+title: "SDL_R_EffectSize_CI"
+output: html_document
+date: "2024-11-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,echo=FALSE}
+
+library(oro.nifti)
+library(neurobase)
+library(effectsize)
+
+# Modified function to process nifti image with voxel-wise n values
+process_nifti_multi <- function(input_path, n_path, base_output_path, func, metrics) {
+  # Create directory if it doesn't exist
+  if (!dir.exists(base_output_path)) {
+    dir.create(base_output_path, recursive = TRUE)
+  }
+  
+  # Load nifti images
+  img <- readNIfTI(input_path)
+  n_img <- readNIfTI(n_path)
+  
+  # Verify dimensions match
+  if (!all(dim(img@.Data) == dim(n_img@.Data))) {
+    stop("Dimensions of z-score image and n image do not match")
+  }
+  
+  # Get the original dimensions
+  orig_dim <- dim(img@.Data)
+  
+  # Flatten both arrays to vectors
+  flat_data <- as.vector(img@.Data)
+  flat_n <- as.vector(n_img@.Data)
+  
+  # Initialize list to store results
+  processed_data <- list()
+  
+  # Process each voxel with its corresponding n value
+  for (metric in metrics) {
+    processed_data[[metric]] <- numeric(length(flat_data))
+  }
+  
+  # Calculate effect sizes for each voxel
+  for (i in seq_along(flat_data)) {
+    if (!is.na(flat_data[i]) && !is.na(flat_n[i]) && flat_n[i] > 0) {
+      result <- z_to_d(flat_data[i], n = flat_n[i])
+      processed_data$d[i] <- result$d
+      processed_data$CI_low[i] <- result$CI_low
+      processed_data$CI_high[i] <- result$CI_high
+    } else {
+      processed_data$d[i] <- NA
+      processed_data$CI_low[i] <- NA
+      processed_data$CI_high[i] <- NA
+    }
+  }
+  
+  # Create and save separate images for each metric
+  for(metric in metrics) {
+    # Reshape metric data back to original dimensions
+    metric_data <- processed_data[[metric]]
+    metric_array <- array(metric_data, dim = orig_dim)
+    
+    # Create new nifti object
+    new_img <- img
+    new_img@.Data <- metric_array
+    
+    # Create output path for this metric
+    metric_output_path <- if(length(metrics) == 1) {
+      file.path(base_output_path, "output")
+    } else {
+      file.path(base_output_path, metric)
+    }
+    
+    # Save processed image
+    suppressWarnings(writeNIfTI(new_img, metric_output_path))
+  }
+  
+  cat("Finished: Effect Size & CI\n")
+  invisible(processed_data)
+}
+
+# Example usage
+path0 <- "/Users/delinsun/Documents/Projects/IBMMA/IBMMA-v0.1.1-beta/Results/fALFF_alff/Mega"
+path1 <- file.path(path0, "TIDY", "statistic", "GROUP", "OUT_Model_01.nii.gz_pTFCE")
+
+process_nifti_multi(
+  input_path = file.path(path1, "pTFCE-z-score-map.nii.gz"),
+  n_path = file.path(path0, "GLANCE", "nobs", "OUT_Model_01.nii.gz"),
+  base_output_path = file.path(path1, "effect_size"),
+  metrics = c("d", "CI_low", "CI_high")
+)
+```
