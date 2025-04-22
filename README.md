@@ -38,7 +38,7 @@ IBMMA addresses these challenges through feature-by-feature statistical modeling
 
 Below is an example of the inclusive masks of three participants from the same study site. It is clear that they are significantly different in brain regions especially in the ventral areas of the brain.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Missing_Values.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Missing_Value.png)
 
 ---- **_Model Flexibility_**. The most popular statistical models in neuroimaging studies are based on linear regressions. These typically use linear combinations of diagnosis, age, sex, and other covariates to predict brain signals across voxels. For instance: _Brain ~ Diagnosis + Age + Sex_. However, researchers need the ability to create more flexible statistical models to address diverse research questions. Examples include: 
 
@@ -50,7 +50,7 @@ Below is an example of the inclusive masks of three participants from the same s
 
 IBMMA can run multiple statistical models by calling released R and Python packages. It simplifies model settings by reading model formulas listed in '**_path_para.xlsx_**'.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Models.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Models.png)
 
 # How to Install It?
 
@@ -58,19 +58,19 @@ IBMMA is still in its early stages of development. Users should download the ent
 
 ----**_Demographic & Clinical File Path_**. "FILE" lists the paths to the .xlsx file of demographic & clinical information, and the corresponding sheet name (listed in "SHEET") in this .xlsx file. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_demographic_clinical.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_demographic_clinical.png)
 
 ----**_Data Path_**. IBMMA does search automatically and recursively across all of the subfolders under the folders with specified "PATH" for the files of interest. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_path.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_data_path.png)
 
 ----**_Data Pattern_**. IBMMA search across the data paths for the files with keywords in their filenames. You MUST define the keywords for "DATA", and may also define the keywords for "INFO" (joson files that usually contain data information such as TR of MRI/fMRI scanning), "MASK" (i.e., subject-specific mask images), and "MASK1" (i.e., group-level mask, could be either whole-brain mask "brain_mask.nii" or grey matter mask "tpl-MNI152NLin2009cAsym_res-02_label-GM_binary_mask_80percent.nii.gz", which coould be found in the folder of "SDL_functions"). The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_pattern.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_data_pattern.png)
 
 ----**_Predictors_**. It helps to rename and filter the variables / variable levels of interest. "VAR" lists the variable names in the model formula, and "NAME" lists the corresponding variable names in the demographic and clinical document. "OLD2NEW" lists the conversions from the old variable levels in "NAME" and the corresponding new levels in "VAR". "VALUES" lists the variable values to be included in analysis. The cases that the corresponding variable values are not listed here will be removed from analysis. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_predictors.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_predictors.png)
 
 ----**_Models_**. IBMMA now incorporates R-style model formulas, eliminating the need for users to manually configure design matrices and contrasts. For instance, the formula 'lmer(Yvar ~ GROUP + AGE + AGE2 + SEX + (1|SITE))' specifies a linear mixed effects model incorporating fixed effects for categorical variables (GROUP and SEX), continuous variables (AGE and AGE2), and a random effect for SITE. The placeholder 'Yvar' represents brain features and requires no modification. Similarly, 'lmer(Yvar ~ GROUP * AGE + AGE + SEX + (1|SITE))' extends the model to include GROUP-by-AGE interaction effects.
 
@@ -95,7 +95,7 @@ As a recently implemented feature, FILTER may occasionally produce unexpected re
 
 The 'TABLE1_SITE_VAR' and 'TABLE1_GROUP_VAR' columns define grouping variables for Tables 1 and S1, respectively. Table 1 typically organizes demographic and clinical information by GROUP levels (e.g., patients versus controls), while Table S1 presents site-specific information breakdowns.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_models.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_models.png)
 
 # How Does It Work?
 
@@ -147,14 +147,13 @@ In the folder "**_TIDY_**", there are subfolders:
 ---- "**_std.error_**": standrad error. 
 
 For example, TIDY outputs for brain images:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_TIDY.png)
 
 For another example, TIDY outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_TIDY_Matrix.png)
 
 It also provides FDR_corrected p values and log10() transformed p values for observation purposes:
-
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_TIDY_Matrix_ps.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_TIDY_Matrix_ps.png)
 
 In the folder "**_GLANCE_**", there are subfolders: 
 
@@ -173,10 +172,10 @@ In the folder "**_GLANCE_**", there are subfolders:
 ---- "**_sigma_**": Residual Standard Error. An estimate of the standard deviation of the residuals in a regression model. It measures the average distance between the observed values and the predicted values.
 
 For example, GLANCE outputs for brain images:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_GLANCE.png)
 
 For another example, GLANCE outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE_Matrix.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_GLANCE_Matrix.png)
 
 **Step 7**: IBMMA generates a dedicated '**_Reports_**' folder containing HTML reports of publication-ready findings. Within this folder, users will find subfolders named according to the values specified in the '**_NAME_**' column of the '**_data_pattern_**' sheet. Each subfolder contains three organizational directories: '**_Mega_**', '**_Meta_**' (currently under development), and '**_Subjects_**'.
 
@@ -190,7 +189,7 @@ Several modules and functions have been planned to be incorporated into IBMMA in
 
 ---- Meta-analysis section. There is an earlier version of the Meta-analysis in IBMMA (https://github.com/sundelinustc/ENIGMA_PTSD_MDD). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Results.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_IBMMA_Meta_Results.png)
 
 ---- Flexible reports. The HTML reports only give the findings survived correction for multiple comparisons. The updated IBMMA will allow users to observe results through self-defined threshold (e.g., p_unc < 0.001, or Z > 3.1 AND nobs > 500).
 
