@@ -38,7 +38,7 @@ IBMMA addresses these challenges through feature-by-feature statistical modeling
 
 Below is an example of the inclusive masks of three participants from the same study site. It is clear that they are significantly different in brain regions especially in the ventral areas of the brain.
 
-![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Missing_Value.png)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Missing_Values.png)
 
 ---- **_Model Flexibility_**. The most popular statistical models in neuroimaging studies are based on linear regressions. These typically use linear combinations of diagnosis, age, sex, and other covariates to predict brain signals across voxels. For instance: _Brain ~ Diagnosis + Age + Sex_. However, researchers need the ability to create more flexible statistical models to address diverse research questions. Examples include: 
 
