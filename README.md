@@ -17,11 +17,11 @@ The current version was mainly developped and tested through using the VSCode(Vi
 Neuroimaging studies on large datasets aggregated from multiple sites (or sources) are becoming increasingly popular. Data repositories such as ENIGMA and NCANDA often provide brain data from hundreds or thousands of individuals. Findings from these large neuroimaging datasets are more robust and replicable than results from traditional single-cohort studies, potentially paving the way for uncovering stable biomarkers for clinical diagnosis and intervention. However, advantages also accompany these challenges:
 
 ---- **_Meta-Analysis & Mega-Analysis_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
-
+https://github.com/sundelinustc/IBMMA/blob/main/Figures
 ![alt text](https://github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Meta_Mega.png?raw=true)
 
 We can get robust and beautiful Meta- and Mega-analysis results:
-![alt text](https://github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
+![alt text](https://github.com/sundelinustc/IBMMA/blob/tree/2025-04-22/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
 
 We can also compare results of different data types or preprocessing protocals:
 ![alt text](https://github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Multi_Data.png?raw=true)
