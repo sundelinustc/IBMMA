@@ -10,7 +10,7 @@ IBMMA produces multiple statistical outputs and model estimations that are consi
 
 In summary, IBMMA is an optimal tool for big neuroimaging data analysis and displaying statistical results. Its powerful capabilities, versatility, and user-friendly output make it an indispensable asset for researchers working with large-scale neuroimaging datasets from multiple study sites.
 
-The current version was mainly developped and tested through using the VSCode(Visual Studio Code) software under Linux platform running on Duke BIAC Cluster. More tests and debugs are needed for different platforms and operating systems. Please download & test the code. Please feel free to contact me at **_ds366@duke.edu_** if you meet any problem.
+The current version was mainly developped and tested through using the VSCode(Visual Studio Code) software under Linux platform running on Duke BIAC Cluster. More tests and debugs are needed for different platforms and operating systems. Please download & test the code. Please feel free to contact Dr. Delin Sun at **_ds366@duke.edu_** if you meet any problem.
 
 # Why to Use It?
 
@@ -26,9 +26,15 @@ We can get robust and beautiful Meta- and Mega-analysis results:
 We can also compare results of different data types or preprocessing protocals:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Multi_Data.png?raw=true)
 
----- **_Data Flexibility_**. Neuroimaging data comes in various formats, including 3D/4D images of brain structures and functions, 2D matrices of brain connections between different regions, and 1D data such as values extracted from regions of interest (ROI). Numerous software packages exist, each targeting specific data types. Consequently, researchers often invest significant time and resources learning to use these different tools. IBMMA addresses this challenge by providing a uniform pipeline to analyze all data types consistently. Specifically, IBMMA flattens any type of data into a 1D format and performs statistical analyses on the elements of this 1D data using parallel processing.
+---- **_Data Flexibility_**. Neuroimaging data presents itself in multiple formats, including 3D/4D images capturing brain structures and functions, 2D matrices representing inter-regional brain connections, and 1D values extracted from regions of interest (ROIs). The field has developed numerous specialized software packages, each tailored to specific data types, requiring researchers to invest considerable time and resources mastering multiple analytical tools. 
 
----- **_Missing Values_**. Missing values are common in neuroimaging studies due to diverse scanning protocols and low data quality in certain brain regions (such as the ventral prefrontal cortex and ventral temporal lobe). The voxels with missing values differ slightly among individuals from the same study site but may vary significantly among participants from different sites. Widely used software for statistical analysis of neuroimaging data, such as SPM and FSL, cannot handle missing values correctly. In other words, if a single person has a missing value in a particular voxel, there will be no statistical output for this voxel even if thousands of participants are included in the analysis. Some preprocessing software, such as HalfPipe, fills missing values with zeros. This approach slightly biases the results per study site but may significantly influence the outputs of multi-cohort studies, especially in data associated with brain regions that differ greatly in missing values among study sites. IBMMA addresses this issue by running voxel-specific statistical modeling and providing statistical outputs of important characteristics (e.g., number of observations and degrees of freedom) per element (e.g., a voxel or a connection).
+IBMMA overcomes this fragmentation by offering a unified analytical pipeline that processes all neuroimaging data types consistently. The software accomplishes this by intelligently flattening any dimensional data into a standardized 1D format, then employing parallel processing to perform statistical analyses on individual elements, creating a seamless workflow regardless of the original data structure.
+
+---- **_Missing Values_**. Missing values are common in neuroimaging studies due to diverse scanning protocols and image quality issues, particularly in susceptible brain regions like the ventral prefrontal cortex and ventral temporal lobe. While voxels with missing values may differ slightly among individuals from the same study site, these variations can become pronounced when comparing participants across different sites. Standard neuroimaging statistical analysis software packages, including SPM and FSL, lack proper mechanisms for handling these missing values. Consequently, if even a single participant has a missing value in a specific voxel, that voxel receives no statistical output, regardless of valid data from thousands of other participants.
+
+This limitation creates what can be termed '**_The Paradox of Large N_**' in neuroimaging meta-analysis: as sample size increases, the number of features (voxels, connections, etc.) that can be comprehensively analyzed across the entire sample paradoxically decreases. Some software packages exacerbate this problem by simply omitting features with missing values, which artificially inflates statistical significance due to multiple comparison corrections being applied across fewer features. Other approaches, such as HalfPipe's method of replacing missing values with zeros, introduce minimal bias in single-site studies but can significantly distort results in multi-cohort analyses, especially in brain regions with substantial site-to-site variability in missing data patterns.
+
+IBMMA addresses these challenges through feature-by-feature statistical modeling, providing comprehensive outputs that include critical parameters such as observation counts and degrees of freedom for each analysis.
 
 Below is an example of the inclusive masks of three participants from the same study site. It is clear that they are significantly different in brain regions especially in the ventral areas of the brain.
 
@@ -48,7 +54,7 @@ IBMMA can run multiple statistical models by calling released R and Python packa
 
 # How to Install It?
 
-IBMMA is still in its early stages of development. Users should download the entire folder and extract it to a location on their computer (the working space). Ensure that this folder contains a file called '**_path_para.xlsx_**' (a template for users to modify according to their own data), a file called '**_ibmma.py_**', and a folder called '**_SDL_functions_**'.
+IBMMA is still in its early stages of development. Users should download the entire folder and ensure that this folder contains a file called '**_path_para.xlsx_**' (a template for users to modify according to their own data), a file called '**_ibmma.py_**', and a folder called '**_SDL_functions_**'.
 
 ----**_Demographic & Clinical File Path_**. "FILE" lists the paths to the .xlsx file of demographic & clinical information, and the corresponding sheet name (listed in "SHEET") in this .xlsx file. The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
@@ -58,7 +64,7 @@ IBMMA is still in its early stages of development. Users should download the ent
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_path.png?raw=true)
 
-----**_Data Pattern_**. IBMMA search across the data paths for the files with keywords in their filenames. You MUST define the keywords for "DATA", and may also define the keywords for "INFO" (joson files that usually contain data information such as TR of MRI/fMRI scanning) and "MASK" (i.e., subject-specific mask images). The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
+----**_Data Pattern_**. IBMMA search across the data paths for the files with keywords in their filenames. You MUST define the keywords for "DATA", and may also define the keywords for "INFO" (joson files that usually contain data information such as TR of MRI/fMRI scanning), "MASK" (i.e., subject-specific mask images), and "MASK1" (i.e., group-level mask, could be either whole-brain mask "brain_mask.nii" or grey matter mask "tpl-MNI152NLin2009cAsym_res-02_label-GM_binary_mask_80percent.nii.gz", which coould be found in the folder of "SDL_functions"). The switch "EXCLUDED" (1=excluded, 0=included for analysis) is used to mark the rows that would NOT be included in analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_data_pattern.png?raw=true)
 
@@ -66,7 +72,28 @@ IBMMA is still in its early stages of development. Users should download the ent
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_predictors.png?raw=true)
 
-----**_Models_**. IBMMA now recognizes model formulas in R style. You do not need to set up the design matrix and contrasts by yourself.
+----**_Models_**. IBMMA now incorporates R-style model formulas, eliminating the need for users to manually configure design matrices and contrasts. For instance, the formula 'lmer(Yvar ~ GROUP + AGE + AGE2 + SEX + (1|SITE))' specifies a linear mixed effects model incorporating fixed effects for categorical variables (GROUP and SEX), continuous variables (AGE and AGE2), and a random effect for SITE. The placeholder 'Yvar' represents brain features and requires no modification. Similarly, 'lmer(Yvar ~ GROUP * AGE + AGE + SEX + (1|SITE))' extends the model to include GROUP-by-AGE interaction effects.
+
+The 'FILTER' column empowers users to selectively analyze subjects of interest without regenerating segmented data files. This feature employs an intuitive syntax:
+    - Semicolons (;) or "AND" represent logical AND operations
+    - Commas (,) or "OR" represent logical OR operations
+    - Tilde (~) or "NOT" represent logical NOT operations
+    - Parentheses () can be used to control the order of operations
+    - Each condition can use comparison operators: ==, !=, <, >, <=, >=
+    - Range conditions like "20 < Age < 30" are supported
+    
+    If filter_string is None or an empty string, returns the original DataFrame.
+    
+    Examples:
+    - "20 < Age < 60; Sex == Female; Gender == 1; Site == Duke, Emory; Sev == 0,1"
+    - "20 < Age < 30 OR Age > 60 AND Sex == Female"
+    - "NOT(GROUP==0 AND AGE<=10)"
+    - "~(Age<18) AND Site == Duke OR Emory"
+    - "(Site == Duke OR Site == Emory) AND Age > 40"
+
+As a recently implemented feature, FILTER may occasionally produce unexpected results. Users may wish to set a debug breakpoint at line #55 just before 'Mega().stat(...)' to verify demographic information displayed in the terminal, or reference the equivalent data in '/Reports/datatype_xxx/Subjects/M01_Table_1.csv'. Site-specific demographic and clinical information is available in '/Reports/datatype_xxx/Subjects/M01_Table_S1.csv', while analysis-ready data resides in '/Reports/datatype_xxx/Subjects/M01.csv'.
+
+The 'TABLE1_SITE_VAR' and 'TABLE1_GROUP_VAR' columns define grouping variables for Tables 1 and S1, respectively. Table 1 typically organizes demographic and clinical information by GROUP levels (e.g., patients versus controls), while Table S1 presents site-specific information breakdowns.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_models.png?raw=true)
 
@@ -88,7 +115,6 @@ IBMMA has a pipeline to automatically run all steps of Meta-analysis (under deve
 
 -- Sheet "**_models_**" are the statistical models used for the analyses. The model formula follows R algorithm. The users do not need to figure out the complex design matrix and contrasts by themselves.
 
-
 **Step 2**: IBMMA generates a new folder "**_masked_**" under the folder "**_Processes_**" and masks the data files (whatever NIFTI images or adjacent matrix saved in .csv files) using the mask files that have the same dimension as the data files. This step is important because some preprocessing softwares impute missing values (due to no information or low-quality values in the corresponding voxel or connection) with 0s. That may lead to wrong statistical outputs, especially for meta- & mega-analysis that are targetting data from different study sites. If there is no mask file, the data file will be used instead.
 
 **Step 3**: IBMMA generates a new folder "**_flattened_**" under the folder "**_Processes_**" and flattens any kind of data into one-dimension.
@@ -102,13 +128,13 @@ It should be noted that, in some high performance computer (HPC) or cluster, The
 
 **Step 7**: IBMMA reverses the concatenated statistical outputs back to the original dimensions of the input data. That is to say, statistical analyses outputs for NIFTI image are still NIFTI images, and for adjacent matrix are still matrix. This step also includes FDR correction for multiple comparisons as well as negatively log10 transformed p-values for observation purpose.
 
-# What Are The Outputs
-
 In the folder "**_Results_**", users could find the subfolders with name listed in the sheet "**_data_pattern_**" column "**_NAME_**". Within each subfolder, there are two folders named "**_Mega_**" and "**_Meta_**" (under development). Within "**_Mega_**", there are two subfolder "**_TIDY_**" and "**_GLANCE_**".
 
 In the folder "**_TIDY_**", there are subfolders: 
 
----- "**_df_**": Degree of Freedom.
+---- "**_df_**": Degree of freedom.
+
+---- "**_effect_size_**": Effect size (Cohen's d for categorical variables only).
 
 ---- "**_estimate_**": Regression coefficient.
 
@@ -116,7 +142,7 @@ In the folder "**_TIDY_**", there are subfolders:
 
 ---- "**_p.value.fdr_**": FDR corrected p value.
 
----- "**_statistic_**": t value.
+---- "**_statistic_**": t value. A subfolder contains the pTFCE enhanced Z values for voxel-wised image analysis results.
 
 ---- "**_std.error_**": standrad error. 
 
@@ -140,7 +166,7 @@ In the folder "**_GLANCE_**", there are subfolders:
 
 ---- "**_logLik_**": Log-Likelihood. The logarithm of the likelihood function, which measures how well the model fits the observed data.
 
----- "**_nobs_**": Number of observations. The total number of data points used in the analysis. It is very important to understand how the findings are influenced by the sample size in big data analysis.
+---- "**_nobs_**": Number of observations. The total number of data points used in the analysis. It is very important to understand how the findings are influenced by the sample size in big data analysis. IBMMA also generates folders of the number of observations per levels of categorical variables, for example, "nobs_GROUP_0", "nobs_GROUP_1", "nobs_SEX_0", and "nobs_SEX_1".
 
 ---- "**_REMLcrit_**": Restricted Maximum Likelihood Criterion. A criterion used in mixed-effects models for estimating variance components. It's an alternative to maximum likelihood estimation.
 
@@ -152,21 +178,25 @@ For example, GLANCE outputs for brain images:
 For another example, GLANCE outputs for correlation matrix (symmetric) of ROI-to-ROI functional connectivity:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_GLANCE_Matrix.png?raw=true)
 
+**Step 7**: IBMMA generates a dedicated '**_Reports_**' folder containing HTML reports of publication-ready findings. Within this folder, users will find subfolders named according to the values specified in the '**_NAME_**' column of the '**_data_pattern_**' sheet. Each subfolder contains three organizational directories: '**_Mega_**', '**_Meta_**' (currently under development), and '**_Subjects_**'.
+
+Effects of interest are systematically organized within subfolders under the '**_Mega_**' directory, containing outputs from various statistical models. For example, GROUP effects might be analyzed through multiple complementary approaches: model M01 'lmer(Yvar ~ GROUP + AGE + AGE2 + SEX + (1|SITE))', model M02 'lmer(Yvar ~ GROUP * AGE + AGE2 + SEX + (1|SITE))', and model M03 'lmer(Yvar ~ GROUP * SEX + AGE + AGE2 + (1|SITE))'.
+
+To review comprehensive statistical outputs, simply left-click the 'index.html' file in the corresponding folders. All results presented have successfully passed rigorous multiple comparison corrections—family-wise error (**_FWE_**) correction for voxel-wise images or false discovery rate (**_FDR_**) correction for connectome analyses—with a conservative threshold of **_q_** < 0.05.
+
 # What Will Come in Next Versions?
 
 Several modules and functions have been planned to be incorporated into IBMMA in future versions:
 
----- Meta analysis section. There is an earlier version of the Meta-analysis in IBMMA (https://github.com/sundelinustc/ENIGMA_PTSD_MDD). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
+---- Meta-analysis section. There is an earlier version of the Meta-analysis in IBMMA (https://github.com/sundelinustc/ENIGMA_PTSD_MDD). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
 
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Results.png?raw=true)
 
----- Multiple methods of correction for multiple comparisons. Now, the default method is FDR whatever the data type is. pTFCE for voxel-wised NIFTI images (https://spisakt.github.io/pTFCE/) has been incorporated. NBS for connection matrix will be added.
+---- Flexible reports. The HTML reports only give the findings survived correction for multiple comparisons. The updated IBMMA will allow users to observe results through self-defined threshold (e.g., p_unc < 0.001, or Z > 3.1 AND nobs > 500).
+
+---- Flexible pipeline. The current IBMMA pipeline consolidates all steps within a single script, 'ibmma.py'. The forthcoming update will introduce enhanced modularity, allowing users to execute specific workflow segments (such as the preliminary steps before Mega().stat(), facilitating verification of subject inclusion). Moreover, customizable parameters (e.g., the number of CPUs and the number of segmentations) will be implemented through a new 'Parameters' sheet in the 'path_para.xlsx' configuration file, providing greater control over the analytical process while maintaining the pipeline's streamlined structure.
 
 ---- Multiple data format. The current version is for the functional neuroimaging data (voxel-based images in *.nii.gz format or connectom-based matrix in .csv format) preprocessed by softwares such as HALFPIPE. The updated IBMMA version will have the ability to do analyses on any format of neuroimaging data, such as cortical thickness, surface area, and gyrification.
-
----- Effect size. Calculations of efect size are important in many aspects such as Power analysis. Future version of IBMMA may include the function to calculate the whole-brain map and matrix of effect size. However, calculation of effect size may be tricky in some models such as linear mixed effects models.
-
----- Measures module. The current IBMMA is designed for statistical analysis on data preprocessed by softwares such as HALFPIPE. A new module may be included to get measures (e.g., static and dynamic functional connectivity, community entropy) based on the preprocessed data and enter them to statistical modellings.
 
 ---- Normative modeling. Normative modeling is an emerging and innovative framework for mapping individual differences at the level of a single subject or observation in relation to a reference model (see https://www.nature.com/articles/s41596-022-00696-5). Future versions of IBMMA may add this function to chart centiles of variation across a population in terms of mappings between biology and behavior, which can then be used to make statistical inferences at the level of the individual. 
 

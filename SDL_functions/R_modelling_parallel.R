@@ -17,15 +17,17 @@
 # This script is the property of Delin Sun.
 # No part of this script may be reproduced in any form without the prior permission of Delin Sun.
 
-# # for test purpose only
-# xfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/Subjects.csv'
-# # yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/corrMatrix_atlas-schaefer2011Combined/segmented/V47000_48880.csv'
-# yfile   <- '/tmp/isilon/morey/lab/dusom_morey/Delin/Projects/ENIGMA_PTSD-MDD/Scripts/Processes/fALFF_alff/segmented/V757435_779076.csv'
-# # out_dir <- 'Processes/corrMatrix_atlas-schaefer2011Combined/stats/V47000_48880/Mega'
-# out_dir <- 'Processes/fALFF_alff/stats/V757435_779076/Mega'
-# model_name <- 'Model_02'
-# # formula <- "lm(Yvar ~ GROUP * AGE + SEX)"
-# formula <- 'lmer(Yvar ~ GROUP * AGE + SEX + (1|SITE))'
+# for test purpose only
+# xfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/report/Subjects/M01.csv'
+xfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/RBA_input_demographics_only.csv'
+yfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/V584280_605920.csv'
+out_dir <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/stats/V584280_605920/Mega'
+model_name <- 'Model_01'
+# formula <- "lmer(Yvar ~ DX + AGE + SEX + (1|Sample))"
+formula <- "lm(Yvar ~ DX + AGE + SEX)"
+# formula <- "lm(Yvar ~ GROUP * AGE + SEX)"
+# formula <- "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))"
+# formula <- "lmer(Yvar ~ 1 + (1|SITE))"
 
 # (0) get command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -48,15 +50,21 @@ do.call(p_load, as.list(packages))
 
 # (2) Helper functions
 # (2.1) function to fit the model and return the tidy and glance results
-fit_model <- function(yvar, formula, dt) {
+fit_model <- function(yvar, formula, dt, nobs_extra, random_var=NULL) {
   # input
-  # --- yvar, a column name in dataframe, e.g., "V123"
+  # --- yvar, a column name in dt, e.g., "V123"
   # --- formula, a string of model, e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))", 
   #              or "lm(Yvar ~ GROUP + AGE + SEX)"
-  # --- dt, data table (by data.table) of independent (Xs) and dependent (Ys) variables
+  # --- dt, data.table of independent (Xs) and dependent (Ys) variables
+  # --- nobs_extra, data.table of categorical variables, their levels, and sample size per level.
+  # --- random_var, column name(s) of random factors
   # output (return a list of tidy & glance)
   # --- tidy, a data table of the model's statistical outputs
   # --- glance, a data table of model summaries
+
+  # drop missing values & empty string
+  # dt <- dt[complete.cases(dt) & !Reduce(`|`, lapply(dt, function(x) trimws(x) == "" | x == "NA" | x == "nan" | x == "NaN" | x == "None" | x == "null"))]
+  dt <- na.omit(dt)
 
   # modify texts of the given formula
   # replace "Yvar" with yvar, which is a column name, e.g., 'V123'
@@ -71,18 +79,61 @@ fit_model <- function(yvar, formula, dt) {
   tidy <- as.data.table(tidy(fit))
   glance <- as.data.table(glance(fit))
 
+  # Inner Function to find columns of categorical variables (<= 4 unique values) in xdt
+  inner_count_categorical_levels <- function(xdt, random_factors = NULL, max_unique_values = 4) {
+    # Identify categorical columns, excluding random factors
+    is_categorical <- function(x) {length(unique(x)) <= max_unique_values}
+    categorical_cols <- names(xdt)[sapply(xdt, is_categorical)]
+    
+    # Exclude random factors if provided
+    if (!is.null(random_factors)) {categorical_cols <- setdiff(categorical_cols, random_factors)}
+    
+    # Calculate level counts for categorical variables
+    results <- data.table()
+    for (col in categorical_cols) {
+      level_counts <- xdt[, .N, by = col]
+      level_counts[, Variable := col]
+      setnames(level_counts, col, "Level")
+      level_counts[, Name := paste("nobs", Variable, Level, sep = "_")]
+      setcolorder(level_counts, c("Variable", "Level", "Name", "N"))
+      results <- rbindlist(list(results, level_counts), use.names = TRUE)
+    }
+    
+    return(results)
+  }
+
+  # supplement glance results with extra nobs of different levels of categorical variable(s)
+  nobs_extra1 <- inner_count_categorical_levels(dt, random_var) # number of unique values <=4 is categorical variable
+  nobs_extra1[, Level := as.character(Level)] # convert the column "Level" from num to character
+
+  # merge nobs_extra & nobs_extra1
+  nobs_extra <- nobs_extra[nobs_extra1, on = c("Variable", "Level", "Name"), N := i.N]
+  nobs_extra[, N := nafill(N, fill = 0)] # NA with 0 in the specific column "N"
+
+  # Check if nobs_extra is not empty
+  if (nrow(nobs_extra) > 0) {
+    # Convert nobs columns to list format for assignment
+    nobs_list <- as.list(nobs_extra[, N])
+    names(nobs_list) <- nobs_extra[, Name]
+    
+    # Add new columns to glance_results
+    glance[1, names(nobs_list) := nobs_list]
+  }
+
   # Return a list of tidy and glance
   return(list(tidy = tidy, glance = glance))
 }
 
 # (2.2) function to fit models across multiple dependent variables parallely
-fit_model_parallel <- function(xdt, ydt, formula, fit_model){
+fit_model_parallel <- function(xdt, ydt, formula, fit_model, nobs_extra, random_var=NULL){
   # input
-  # --- xdt, data.table of independent variables (Xs)
-  # --- ydt, data.table of dependent variables (Ys)
+  # --- xdt, data.table of independent variables (Xs).
+  # --- ydt, data.table of dependent variables (Ys).
   # --- formula, a string of model, e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))", 
-  #              or "lm(Yvar ~ GROUP + AGE + SEX)"
-  # --- fit_model, the pre-defined function fit_model
+  #              or "lm(Yvar ~ GROUP + AGE + SEX)".
+  # --- fit_model, the pre-defined function fit_model.
+  # --- nobs_extra, data.table of categorical variables, their levels, and sample size per level.
+  # --- random_var, column name(s) of random factors
 
   # create a list where each element is a list containing a data.table of ydt column and the corresponding column name
   ydt_list <- lapply(colnames(ydt), function(y) list(data = data.table(ydt[[y]]), name = y))
@@ -95,7 +146,7 @@ fit_model_parallel <- function(xdt, ydt, formula, fit_model){
     packages <- c("data.table", "broom")
   }
 
-  # function to combine outputs of the parallel processing outputs
+  # Inner function to combine parallel processing outputs
   comb <- function(x, ...) {
     # input
     # --- series of dataframes generated by parallel processing
@@ -105,7 +156,8 @@ fit_model_parallel <- function(xdt, ydt, formula, fit_model){
     }
 
   # the number of cores that could be used
-  cores <- min(detectCores(), dim(ydt)[2]) # minimum of possible cores and number of outcome variables
+  # cores <- min(detectCores(), dim(ydt)[2]) # minimum of possible cores and number of outcome variables
+  cores <- detectCores() - 1
   # use all or some of them
   cl <- makeCluster(cores) # default: use all of the cores to speed up
   # register the parallel backend
@@ -118,12 +170,15 @@ fit_model_parallel <- function(xdt, ydt, formula, fit_model){
   # run the fit_model function in parallel for each dependent variable & combine the results in a list
   results <- foreach(ydt1 = ydt_list, .packages = packages, .combine='comb', .multicombine=T, .init=list(list(), list())) %dopar% {
       tryCatch({
+        # # for test purpose only
+        # ydt1 <- ydt_list[[3372]]
+
         # merge the two data.tables
         dt <- cbind(xdt, ydt1$data) # not using merge by fID to save time
         # get yvar name
         yvar <- ydt1$name
         # model fit
-        res <- fit_model('V1', formula, dt) # the column name of ydt1$data is always "V1"
+        res <- fit_model('V1', formula, dt, nobs_extra, random_var) # the column name of ydt1$data is always "V1"
         # tidy results
         tidy_results <- res$tidy
         tidy_results$Yvar <- yvar # New column of Yvar to be added
@@ -170,8 +225,12 @@ save_broom_parallel <- function(TIDY, GLANCE, outdir, model_name){
   #            subfolder corresponding to GLANCE columns (e.g., AIC, BIC), and each subfolder contains
   #            csv file (share filename with yfile) of GLANCE for the given column (e.g., "AIC")
 
-  # prnt some info
+  # prnt info
   print("Modelling completed! Now saving results ...")
+
+  # Ensure TIDY and GLANCE are data.tables
+  if (!is.data.table(TIDY)) TIDY <- as.data.table(TIDY)
+  if (!is.data.table(GLANCE)) GLANCE <- as.data.table(GLANCE)
 
   # TIDY terms excluding "(Intercept)"
   TIDY_terms <- setdiff(unique(TIDY$term), "(Intercept)")
@@ -187,7 +246,7 @@ save_broom_parallel <- function(TIDY, GLANCE, outdir, model_name){
   GLANCE_term_cols <- expand.grid("GLANCE",        "", GLANCE_cols)
   term_cols <- rbind(TIDY_term_cols, GLANCE_term_cols)
 
-  # a function to split and save data
+  # Inner function to split and save data
   save_data <- function(term_col) {
     # data of interest
     TIDY_GLANCE <- as.character(term_col[1][1,1]) # TIDY or GLANCE
@@ -214,11 +273,12 @@ save_broom_parallel <- function(TIDY, GLANCE, outdir, model_name){
   packages <- c("data.table")
 
   # Use parallel processing to speed up
-  num_cores <- min(detectCores(), dim(term_cols)[1]) # minimum number of cores to save resources
+  # num_cores <- min(detectCores(), dim(term_cols)[1]) # minimum number of cores to save resources
+  num_cores <- detectCores() - 1
   cl <- makeCluster(num_cores)
   # register the parallel backend
   registerDoParallel(cl)
-  foreach(i = 1:dim(term_cols)[1], .packages = packages) %dopar% {save_data <- save_data(term_cols[i,]) }
+  foreach(i = 1:dim(term_cols)[1], .packages = packages) %dopar% {save_data(term_cols[i,]) }
 
   # parLapply(cl, split(term_cols, seq(nrow(term_cols))), save_data)
   stopCluster(cl)
@@ -245,46 +305,113 @@ parallel_model <- function(xfile, yfile, out_dir, model_name, formula, fit_model
   # output directory (same name as the yfile, just without file extension)
   outdir <- out_dir
 
+  # Define a custom NA strings vector that covers common missing value representations
+  na_strings <- c(NA, "NA", "na", "N/A", "n/a", "NULL", "null", "Null",
+    "NONE", "none", "None", "NAN", "NaN", "nan", "")
+
   # read independent variables (Xs)
-  xdt <- fread(xfile)
+  xdt <- fread(xfile, na.strings = na_strings)  # Keep strings as character
 
-  # Extract variable names from the formula
-  vars <- strsplit(formula, "[~+|()]")[[1]]
-  vars <- gsub(" ", "", vars)  # remove spaces
+  # Optional: Add additional check for columns that might still have variants of missing values
+  # This helps catch any unusual representations that weren't in the na_strings vector
+  for(col in names(xdt)) {
+    if(is.character(xdt[[col]])) {
+      # Convert additional patterns to NA using regex
+      set(xdt, i = which(grepl("^[[:space:]]*$|^[Nn][Aa][Nn]?$|^[Nn]/[Aa]$|^[Nn][Uu][Ll][Ll]$|^[Nn][Oo][Nn][Ee]$", xdt[[col]])), 
+          j = col, 
+          value = NA)
+    }
+  }
 
-  # Split the vector elements based on "*" and replace the original elements
-  # for interactions such as "GROUP * AGE"
-  vars <- unlist(lapply(vars, function(x) strsplit(x, "\\*")[[1]]))
- 
-  # column names that appear in both xdt and formula (add 'fID')
-  xdt_cols <- c('fID',unlist(colnames(xdt)[colnames(xdt) %in% vars]))
+  # Inner function to subset data.table keeping only variables in formula plus fID
+  # and also return the column names of random factors
+  subset_dt_by_formula <- function(dt, formula_str) {
+    # Extract all variables and add fID
+    formula_clean <- gsub("\\s+", "", formula_str)
+    vars <- unique(c(unlist(regmatches(formula_clean, gregexpr("[[:alnum:]_\\.]+", formula_clean))), "fID"))
+    
+    # Extract random factors (variables after | symbol)
+    random_pattern <- "\\|([[:alnum:]_\\.]+)"
+    random_factors <- unique(unlist(regmatches(formula_clean, gregexpr(random_pattern, formula_clean), invert = FALSE)))
+    random_factors <- gsub("\\|", "", random_factors)
+    
+    # Remove function names and keep only variables in the data.table
+    vars_to_keep <- vars[!grepl("^(lm|lmer|glm|glmer)$", vars) & vars %in% names(dt)]
+    
+    # Return subsetted data.table and random factors
+    return(list(
+      data = dt[, ..vars_to_keep],
+      random_factors = random_factors[random_factors %in% names(dt)]
+    ))
+  }
+  # Keep xdt's columns that appear in the formula, + fID
+  result <- subset_dt_by_formula(xdt,formula)
+  xdt <- result$data 
+  xdt <- na.omit(xdt) # remove all rows with missing value
+  cols_xdt <- names(xdt) # column names of xdt
+  random_factors <- result$random_factors
 
-  # clean xdt by keeping columns that appear in the formula (& fID)
-  xdt <- xdt[,..xdt_cols]
-  cols_xdt <- names(xdt)
+  # Inner function to find columns of categorical variables (<= 4 unique values) in xdt
+  count_categorical_levels <- function(xdt, random_factors = NULL, max_unique_values = 4) {
+    # Identify categorical columns, excluding random factors
+    is_categorical <- function(x) {length(unique(x)) <= max_unique_values}
+    categorical_cols <- names(xdt)[sapply(xdt, is_categorical)]
+    
+    # Exclude random factors if provided
+    if (!is.null(random_factors)) {categorical_cols <- setdiff(categorical_cols, random_factors)}
+    
+    # Calculate level counts for categorical variables
+    results <- data.table()
+    for (col in categorical_cols) {
+      level_counts <- xdt[, .N, by = col]
+      level_counts[, Variable := col]
+      setnames(level_counts, col, "Level")
+      level_counts[, Name := paste("nobs", Variable, Level, sep = "_")]
+      setcolorder(level_counts, c("Variable", "Level", "Name", "N"))
+      results <- rbindlist(list(results, level_counts), use.names = TRUE)
+    }
+    
+    return(results)
+  }
+
+  # supplement glance results with extra nobs of different levels of categorical variable(s)
+  nobs_extra <- count_categorical_levels(xdt, random_factors) # number of unique values <=4 is categorical variable
+  nobs_extra <- na.omit(nobs_extra) # remove levels of NA
+  nobs_extra <- nobs_extra[,c("Variable", "Level", "Name")] # no need to keep column of N 
+  nobs_extra[, Level := as.character(Level)] # convert the column "Level" from num to character
 
   # read dependent variables (Ys)
-  ydt <- fread(yfile, header=TRUE)
+  ydt <- fread(yfile, header=TRUE, na.strings = na_strings)
   cols_ydt <- names(ydt)
 
-  # Merge xdt and ydt
+  # Merge xdt and ydt through their common values in fID
   dt_merged <- merge(xdt, ydt, by = "fID", all = FALSE)
 
   # Update xdt & ydt
   xdt <- dt_merged[,..cols_xdt]
   ydt <- dt_merged[,..cols_ydt]
+  ydt <- ydt[, !c("fID")] # Drop fID in ydt
 
-  # Drop fID in ydt
-  ydt <- ydt[, !c("fID")]
+  # Inner function to check if a column is "bad" - meaning it is:
+  # - constant (all the same value)
+  # - full of NA
+  # - full of NaN
+  # - full of empty entries
+  # - has only one unique non-NA/non-NaN value
+  # - has 5 or fewer numeric values
+  is_bad_column <- function(dt, col_name) {
+    col <- dt[[col_name]]
+    if (all(is.na(col))) return(TRUE) # Fast checks using data.table optimizations
+    non_na_values <- col[!is.na(col)] # Count non-NA values using data.table's efficient operations
+    if (length(non_na_values) > 0 && all(non_na_values == "")) return(TRUE) # Check if all non-NA values are empty strings
+    if (length(non_na_values) > 0 && uniqueN(non_na_values) == 1) return(TRUE) # Check if all non-NA values are the same (constant column)
+    numeric_count <- sum(!is.na(col) & is.numeric(col)) # Count numeric values efficiently
+    if (numeric_count <= 5) return(TRUE)
+    return(FALSE)
+  }
 
-  # function to check if a dataframe column is constant, full of NA, full of NaN, full of empty entries, full of the same value (e.g., constant without considering NA or NaN), or the number of rows that containing numeric values is no more than 5 
-  count_numeric <- function(x) {sum(!is.na(x) & !is.nan(x) & is.numeric(x))} # function to get the number of rows that containing numeric values (not na or nan)
-  is_bad_column <- function(col) {all(is.na(col)) || all(is.nan(col)) || all(col == "") || length(unique(col[!is.na(col) & !is.nan(col)])) == 1 || sum(sapply(col, count_numeric)) <= 5}
-  # V27019
-
-  # get the names of the bad columns in ydt that are constant, or full of NaNs, or full of NAs, or full of empty entries
-  are_bad_columns <- sapply(ydt, is_bad_column)
-  bad_columns <- colnames(ydt)[are_bad_columns]
+  # Identify bad columns
+  bad_columns <- names(ydt)[sapply(names(ydt), function(col) is_bad_column(ydt, col))]
 
   # model fitting & save outputs only when not all outcome variables are constant, NAs, NaNs, or empty entries
   if (length(bad_columns) < length(colnames(ydt))){
@@ -292,7 +419,7 @@ parallel_model <- function(xfile, yfile, out_dir, model_name, formula, fit_model
     if (length(bad_columns) > 0){ydt[, (bad_columns) := NULL]}
 
     # fit model parallely
-    output <- fit_model_parallel(xdt, ydt, formula, fit_model)
+    output <- fit_model_parallel(xdt, ydt, formula, fit_model, nobs_extra, random_var=random_factors)
 
     # save TIDY & GLANCE parallely
     save_broom_parallel(output$TIDY, output$GLANCE, outdir, model_name)

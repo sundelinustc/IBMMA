@@ -1,7 +1,10 @@
 import os  # for file operations
-import nibabel as nib # for reading and writing nifti images
+import re # for regular expressions to match and manipulate strings of text
+import sys
 import numpy as np # for manipulating arrays
 import pandas as pd # for working with csv files
+import scipy.stats as stats # for Cohen's D and CI
+import nibabel as nib # for reading and writing nifti images
 import nilearn.plotting as plotting # for plotting matrix of connection
 import matplotlib.pyplot as plt # for making the frame of plotting
 import multiprocessing as mp # for parallel processing
@@ -9,6 +12,7 @@ import subprocess # for calling functions through OS system
 import time # for measuring time elapsed
 from tqdm import tqdm # for progress bar
 from statsmodels.stats.multitest import multipletests # for correction of multiple comparisons
+from tableone import TableOne
 
 # Function to mask data file
 def mask_single(args):
@@ -106,10 +110,14 @@ def apply_mask_to_single_csv_file(args):
     Output:
         Updated CSV file that conatins elements with the same 'Yvar' in mask_yvar.
     """
+    # try:
     csv_file, mask_yvar = args
     df_csv = pd.read_csv(csv_file)
     df_csv[df_csv['Yvar'].isin(mask_yvar)].to_csv(csv_file, index=False)
     print(f"Updated CSV file using inclusive mask: {csv_file}.")
+    # except Exception as e:
+    #     print(f"Error applying mask or saving file {csv_file}: {str(e)}")
+    #     return
            
 # Function to flatten a high-dimensional data & save into multiple one-row csv files
 def flatten_single(args):
@@ -232,6 +240,334 @@ def segment_stack_single(args):
     combined_df.to_csv(output_file, index=False)
     print(f"Combined CSV saved to: {output_file}")
 
+# Function to filter rows of interest in the dataframe from Subjects.csv
+import pandas as pd
+import re
+import sys
+
+def filter_dataframe(df, filter_string=None):
+    """
+    Filter a pandas DataFrame using a text-based filter condition with flexible syntax.
+    
+    The filter string uses the following syntax:
+    - Semicolons (;) or "AND" represent logical AND operations
+    - Commas (,) or "OR" represent logical OR operations
+    - Tilde (~) or "NOT" represent logical NOT operations
+    - Parentheses () can be used to control the order of operations
+    - Each condition can use comparison operators: ==, !=, <, >, <=, >=
+    - Range conditions like "20 < Age < 30" are supported
+    
+    If filter_string is None or an empty string, returns the original DataFrame.
+    
+    Examples:
+    - "20 < Age < 60; Sex == Female; Gender == 1; Site == Duke, Emory; Sev == 0,1"
+    - "20 < Age < 30 OR Age > 60 AND Sex == Female"
+    - "NOT (GROUP==0 AND AGE<=10)"
+    - "~(Age<18) AND Site == Duke OR Emory"
+    - "(Site == Duke OR Site == Emory) AND Age > 40"
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The DataFrame to filter
+    filter_string : str, optional
+        The filter condition as a text string
+    
+    Returns:
+    --------
+    pandas.DataFrame
+        The filtered DataFrame
+    """
+    # If filter_string is None or empty, return the original DataFrame
+    if not filter_string:
+        return df
+    
+    # Set a higher recursion limit if needed but not too high
+    original_recursion_limit = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(2000)  # Increase but not too much
+        
+        # Pre-process the filter string
+        filter_string = preprocess_filter(filter_string)
+        
+        # Process the filter string using iteration instead of deep recursion
+        final_mask = parse_filter(filter_string, df)
+        
+        # Return the filtered DataFrame
+        return df[final_mask]
+    except Exception as e:
+        print(f"Error processing filter: {str(e)}")
+        # Return the original DataFrame in case of error
+        return df
+    finally:
+        # Restore original recursion limit
+        sys.setrecursionlimit(original_recursion_limit)
+
+
+def preprocess_filter(filter_string):
+    """Normalize logical operators to standard form."""
+    # Replace logical operators with standardized symbols
+    # NOT -> ~
+    filter_string = re.sub(r'\bNOT\b', '~', filter_string, flags=re.IGNORECASE)
+    
+    # Replace AND with ; (being careful with strings)
+    result = ""
+    in_quotes = False
+    i = 0
+    
+    while i < len(filter_string):
+        if filter_string[i] in ['"', "'"]:
+            in_quotes = not in_quotes
+            result += filter_string[i]
+            i += 1
+        elif not in_quotes and i + 2 < len(filter_string) and filter_string[i:i+3].upper() == 'AND':
+            # Check if it's surrounded by spaces or is at the beginning/end
+            if (i == 0 or filter_string[i-1].isspace()) and (i+3 >= len(filter_string) or filter_string[i+3].isspace()):
+                result += ";"
+                i += 3
+            else:
+                result += filter_string[i]
+                i += 1
+        elif not in_quotes and i + 1 < len(filter_string) and filter_string[i:i+2].upper() == 'OR':
+            # Check if it's surrounded by spaces or is at the beginning/end
+            if (i == 0 or filter_string[i-1].isspace()) and (i+2 >= len(filter_string) or filter_string[i+2].isspace()):
+                result += ","
+                i += 2
+            else:
+                result += filter_string[i]
+                i += 1
+        else:
+            result += filter_string[i]
+            i += 1
+    
+    return result.strip()
+
+def parse_filter(filter_string, df, depth=0):
+    """
+    Parse the filter string using an iterative approach to avoid excessive recursion.
+    """
+    # Check recursion depth
+    if depth > 50:  # Set a reasonable limit
+        raise RecursionError("Filter parsing reached maximum allowed depth")
+    
+    # Base case: empty string
+    if not filter_string:
+        return pd.Series(True, index=df.index)
+    
+    # Initialize masks
+    final_mask = pd.Series(True, index=df.index)
+    
+    # Split into AND conditions (highest precedence after parentheses and NOT)
+    and_parts = split_top_level(filter_string, ';')
+    
+    for and_part in and_parts:
+        and_part = and_part.strip()
+        if not and_part:
+            continue
+            
+        # Split into OR conditions
+        or_parts = split_top_level(and_part, ',')
+        or_mask = pd.Series(False, index=df.index)
+        
+        for or_part in or_parts:
+            or_part = or_part.strip()
+            if not or_part:
+                continue
+                
+            # Process this part
+            part_mask = process_part(or_part, df, depth+1)
+            or_mask |= part_mask
+            
+        # Add to final mask with AND
+        final_mask &= or_mask
+    
+    return final_mask
+
+
+def process_part(part, df, depth):
+    """Process a single part of the filter (not containing top-level AND/OR)."""
+    part = part.strip()
+    
+    # Check for NOT
+    if part.startswith('~'):
+        # Process the rest and negate it
+        if part[1:].strip().startswith('('):
+            # Find matching closing parenthesis
+            open_count = 0
+            close_pos = -1
+            
+            for i, char in enumerate(part[1:]):
+                if char == '(':
+                    open_count += 1
+                elif char == ')':
+                    open_count -= 1
+                    if open_count == 0:
+                        close_pos = i + 1
+                        break
+            
+            if close_pos > 0:
+                # Extract and process the inner condition
+                inner_condition = part[2:close_pos]
+                inner_mask = parse_filter(inner_condition, df, depth+1)
+                
+                # Check if there's anything after the closing parenthesis
+                if len(part) > close_pos + 1:
+                    remaining = part[close_pos+1:].strip()
+                    if remaining.startswith(';'):
+                        # AND operation after negation
+                        remaining_mask = parse_filter(remaining[1:], df, depth+1)
+                        return ~inner_mask & remaining_mask
+                    elif remaining.startswith(','):
+                        # OR operation after negation
+                        remaining_mask = parse_filter(remaining[1:], df, depth+1)
+                        return ~inner_mask | remaining_mask
+                
+                return ~inner_mask
+            else:
+                raise ValueError(f"Unmatched parenthesis in: {part}")
+        else:
+            # Simple negation of a single condition
+            return ~process_simple_condition(part[1:].strip(), df)
+    
+    # Check for parenthesized expression
+    if part.startswith('('):
+        # Find matching closing parenthesis
+        open_count = 1
+        close_pos = -1
+        
+        for i, char in enumerate(part[1:], 1):
+            if char == '(':
+                open_count += 1
+            elif char == ')':
+                open_count -= 1
+                if open_count == 0:
+                    close_pos = i
+                    break
+        
+        if close_pos > 0:
+            # Process the inner condition
+            inner_condition = part[1:close_pos]
+            inner_mask = parse_filter(inner_condition, df, depth+1)
+            
+            # Check if there's anything after the closing parenthesis
+            if len(part) > close_pos + 1:
+                remaining = part[close_pos+1:].strip()
+                if remaining.startswith(';'):
+                    # AND operation after parenthesis
+                    remaining_mask = parse_filter(remaining[1:], df, depth+1)
+                    return inner_mask & remaining_mask
+                elif remaining.startswith(','):
+                    # OR operation after parenthesis
+                    remaining_mask = parse_filter(remaining[1:], df, depth+1)
+                    return inner_mask | remaining_mask
+            
+            return inner_mask
+        else:
+            raise ValueError(f"Unmatched parenthesis in: {part}")
+    
+    # Process simple condition
+    return process_simple_condition(part, df)
+
+
+def process_simple_condition(condition, df):
+    """Process a simple condition without complex logical operators."""
+    condition = condition.strip()
+    
+    # Check for double-sided range conditions like "20 < Age < 60"
+    range_match = re.match(r'^(\d+(?:\.\d+)?)\s*<\s*(\w+)\s*<\s*(\d+(?:\.\d+)?)$', condition)
+    if range_match:
+        lower_bound, column, upper_bound = range_match.groups()
+        try:
+            lower_bound, upper_bound = float(lower_bound), float(upper_bound)
+            return (df[column] > lower_bound) & (df[column] < upper_bound)
+        except Exception as e:
+            print(f"Error processing range condition: {condition} - {e}")
+            return pd.Series(False, index=df.index)
+    
+    # Check for operators
+    for operator in ['==', '!=', '<=', '>=', '<', '>']:
+        if operator in condition:
+            parts = condition.split(operator, 1)
+            if len(parts) == 2:
+                column = parts[0].strip()
+                value = parts[1].strip()
+                
+                # Make sure the column exists
+                if column not in df.columns:
+                    print(f"Warning: Column '{column}' not found in DataFrame")
+                    return pd.Series(False, index=df.index)
+                
+                # Try to convert to appropriate type
+                try:
+                    val = int(value)
+                except ValueError:
+                    try:
+                        val = float(value)
+                    except ValueError:
+                        val = value
+                
+                # Apply the appropriate comparison
+                try:
+                    if operator == '==':
+                        return df[column] == val
+                    elif operator == '!=':
+                        return df[column] != val
+                    elif operator == '<':
+                        return df[column] < val
+                    elif operator == '>':
+                        return df[column] > val
+                    elif operator == '<=':
+                        return df[column] <= val
+                    elif operator == '>=':
+                        return df[column] >= val
+                except Exception as e:
+                    print(f"Error comparing {column} {operator} {value}: {e}")
+                    return pd.Series(False, index=df.index)
+    
+    # If we get here, we couldn't parse the condition
+    print(f"Warning: Could not parse condition: {condition} - treating as False")
+    return pd.Series(False, index=df.index)
+
+
+def split_top_level(text, delimiter):
+    """
+    Split text by delimiter, but only at the top level (not inside parentheses).
+    If delimiter is ',' and text contains '==', prefix each part after splitting with the pattern before '=='.
+    """
+    parts = []
+    current_part = ""
+    paren_level = 0
+    
+    for char in text:
+        if char == '(':
+            paren_level += 1
+            current_part += char
+        elif char == ')':
+            paren_level -= 1
+            current_part += char
+        elif char == delimiter and paren_level == 0:
+            parts.append(current_part)
+            current_part = ""
+        else:
+            current_part += char
+    
+    if current_part:
+        parts.append(current_part)
+    
+    # Apply the prefix logic only if delimiter is ',' and the pattern has '=='
+    if delimiter == ',' and parts and '==' in parts[0]:
+        # Extract the prefix from the first part
+        prefix_parts = parts[0].split('==')
+        prefix = prefix_parts[0] + '=='
+        
+        # Keep first part as is, modify the rest
+        final_parts = [parts[0]]
+        for part in parts[1:]:
+            final_parts.append(prefix + part.strip())
+        
+        return final_parts
+    
+    return parts
 
 # Function to run statistical analysis by calling R script
 def r_script(r_script_path, args):
@@ -461,6 +797,335 @@ def reverse_single(args):
     else:
         print(f'Reverse problem: unknown data type, not .nii/.nii.gz, nor matrix\n')
 
+
+# Function to calculate effect size (Conhen's d for case-control contrast) and CI
+def CohenD_CI(t_matrix, n1_matrix, n2_matrix, alpha=0.05, output_path=None):
+    """
+    Calculate Cohen's d, confidence intervals, and related statistics voxel-wise.
+    
+    Parameters:
+    -----------
+    t_matrix : numpy.ndarray or str
+        Input t-value matrix or path to NIfTI/CSV file containing t-values
+    n1_matrix : numpy.ndarray or str
+        Input matrix or file for sample sizes of group 1
+    n2_matrix : numpy.ndarray or str
+        Input matrix or file for sample sizes of group 2
+    alpha : float, optional
+        Significance level for confidence interval (default: 0.05)
+    output_path : str, optional
+        Directory path to save output files
+    
+    Returns:
+    --------
+    Comprehensive dictionary of statistical results
+    """
+    # Determine input format
+    def load_input(input_data):
+        if isinstance(input_data, str):
+            if input_data.endswith('.nii') or input_data.endswith('.nii.gz'):
+                # Load NIfTI image
+                nifti_img = nib.load(input_data)
+                return nifti_img.get_fdata(), True, nifti_img
+            elif input_data.endswith('.csv'):
+                # Load CSV
+                return pd.read_csv(input_data, header=None).to_numpy(), False, None
+            else:
+                raise ValueError("Unsupported file format. Use .nii, .nii.gz, or .csv")
+        else:
+            # Assume numpy array
+            return np.asarray(input_data), False, None
+    
+    # Load inputs
+    t_values, is_nifti, nifti_img = load_input(t_matrix)
+    n1_values, _, _ = load_input(n1_matrix)
+    n2_values, _, _ = load_input(n2_matrix)
+    
+    # Validate input dimensions
+    if not (t_values.shape == n1_values.shape == n2_values.shape):
+        raise ValueError("Input matrices must have identical dimensions")
+    
+    # Degrees of freedom
+    df = n1_values + n2_values - 2
+    
+    # Cohen's d calculation (voxel-wise)
+    # d = t * sqrt((n1 + n2) / (n1 * n2))
+    d_values = t_values * np.sqrt(1/n1_values + 1/n2_values)
+    
+    # Standard Error calculation
+    se_diff = np.sqrt(1/n1_values + 1/n2_values)
+    
+    # Calculate critical value
+    critical_value = stats.t.ppf(1 - alpha / 2, df)
+    
+    # Confidence Interval
+    ci_lower = d_values - (critical_value * se_diff)
+    ci_upper = d_values + (critical_value * se_diff)
+    
+    # Effect direction (based on original t-values)
+    effect_direction = np.sign(t_values)
+    
+    # Interpretation of effect size
+    def interpret_effect_size(d):
+        abs_d = np.abs(d)
+        interpretation = np.full_like(abs_d, fill_value='Negligible effect', dtype='<U20')
+        interpretation[abs_d >= 0.2] = 'Small effect'
+        interpretation[abs_d >= 0.5] = 'Medium effect'
+        interpretation[abs_d >= 0.8] = 'Large effect'
+        return interpretation
+    
+    # Prepare results
+    results = {
+        'cohens_d': d_values,  # Preserves original sign from t-values
+        'cohens_d_abs': np.abs(d_values),
+        'ci_lower': ci_lower,
+        'ci_upper': ci_upper,
+        'effect_direction': effect_direction,
+        'interpretation': interpret_effect_size(np.abs(d_values)),
+        'sample_info': {
+            'sample_size_1': n1_values,
+            'sample_size_2': n2_values,
+            'degrees_of_freedom': df
+        }
+    }
+    
+    # Handle output
+    if output_path:
+        # Ensure output directory exists
+        os.makedirs(output_path, exist_ok=True)
+        
+        # Prepare output files
+        output_files = {
+            'cohens_d': os.path.join(output_path, 'cohens_d.csv'),
+            'ci_lower': os.path.join(output_path, 'ci_lower.csv'),
+            'ci_upper': os.path.join(output_path, 'ci_upper.csv')
+        }
+        
+        # Save based on input format
+        if is_nifti:
+            # Create and save NIfTI images
+            for key, filepath in output_files.items():
+                output_nifti = nib.Nifti1Image(results[key], nifti_img.affine, nifti_img.header)
+                nib.save(output_nifti, filepath.replace('.csv', '.nii.gz'))
+        else:
+            # Save as CSV files
+            for key, filepath in output_files.items():
+                pd.DataFrame(results[key]).to_csv(filepath, index=False, header=False)
+        
+        return results
+    
+    # Always return results dictionary
+    return results
+
+# Function to extract variable names from a statistical model string
+def extract_model_variables(model_txt, random_factor_included=False):
+    """
+    Extract variable names from a statistical model string.
+    
+    This function parses a model string (typically from a formula in statistical modeling)
+    and extracts the unique variable names, removing operators and numeric values.
+    
+    Args:
+        model_txt (str): A statistical model string, typically in the format '~var1 + var2 + ...'
+        random_factor_included (bool, optional): If False, variables after '|' are not included.
+                                                 Defaults to False.
+    
+    Returns:
+        list: A list of unique variable names found in the model string
+    
+    Raises:
+        ValueError: If the model string does not contain '~' and ')' 
+                    (typical of many statistical model representations)
+    
+    Example:
+        >>> extract_model_variables('~var1 + var2 * (1|SITE)', random_factor_included=False)
+        ['var1', 'var2']
+        >>> extract_model_variables('~var1 + var2 * (1|SITE)', random_factor_included=True)
+        ['var1', 'var2', 'SITE']
+    """
+    # Find the part of the string after '~' and before ')'
+    match = re.search(r'~(.*)\)', model_txt)
+    
+    # Raise an error if the expected pattern is not found
+    if not match:
+        raise ValueError("Invalid model string format. Expected '~' and ')'")
+    
+    # Extract the variables portion of the string
+    model_vars = match.group(1)
+    
+    # If random factors are not to be included, remove everything after '|'
+    if not random_factor_included:
+        model_vars = model_vars.split('|')[0]
+    
+    # Replace various statistical model separators with spaces
+    # This helps in splitting the string into individual components
+    for sep in ['+', '-', '(', ')', '|', '*', ':','/']:
+        model_vars = model_vars.replace(sep, ' ')
+    
+    # Split by whitespace and clean up the variable list
+    # Remove empty strings and strip whitespace
+    var_list = [var.strip() for var in model_vars.split() if var.strip()]
+    
+    # Remove any numeric values that might have been extracted
+    var_list = [var for var in var_list if not var.isdigit()]
+    
+    # Return unique variables while preserving order
+    return list(dict.fromkeys(var_list))
+
+# Function to find categorical columns in a CSV file
+def find_categorical_columns(csv_path, columns_to_check=None):
+    """
+    Find categorical columns in a CSV file.
+    
+    A column is considered categorical if it has:
+    - More than 1 and fewer than 5 unique non-missing values
+    
+    Parameters:
+    -----------
+    csv_path : str
+        Path to the CSV file to be loaded
+    
+    columns_to_check : list, optional
+        List of column names to check. If None, checks all columns.
+    
+    Returns:
+    --------
+    list or None
+        A list of column names that are categorical.
+        Returns None if no categorical columns are found.
+    
+    Example:
+    --------
+    >>> find_categorical_columns('data.csv', columns_to_check=['Age', 'Sex'])
+    ['Sex']
+    """
+    # Read the CSV file
+    df = pd.read_csv(csv_path)
+    
+    # If no columns specified, check all columns
+    if columns_to_check is None:
+        columns_to_check = df.columns
+    
+    # List to store categorical column names
+    categorical_columns = []
+    
+    # Check each specified column
+    for col in columns_to_check:
+        # Check if column exists
+        if col not in df.columns:
+            raise ValueError(f"Column '{col}' not found in the CSV file")
+        
+        # Count unique non-missing values
+        unique_non_missing_values = df[col].dropna().nunique()
+        
+        # Check if column is categorical
+        if 1 < unique_non_missing_values < 5:
+            categorical_columns.append(col)
+    
+    # Return None if no categorical columns found
+    return categorical_columns if categorical_columns else None
+
+# Function to make descriptive statistics Table 1 & Table S1
+def generate_demographic_tables(
+    model_name: str,
+    model_txt: str, 
+    subjects_csv_file: str, 
+    table1_group_var: str, 
+    table1_site_var: str = None
+) -> tuple:
+    """
+    Generate demographic tables from a statistical model and CSV file.
+
+    Parameters:
+    -----------
+    model_name : str
+        Name of the model (e.g., "M01" or "Model_02") to be used in output file names
+    model_txt : str
+        Statistical model formula (e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1/SITE|site))")
+    subjects_csv_file : str
+        Path to the CSV file containing subject information
+    table1_group_var : str
+        Variable to use for primary grouping in Table 1
+    table1_site_var : str, optional
+        Variable to use for secondary grouping in Table S1
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - DataFrame of Table 1 
+        - DataFrame of Supplementary Table 1 (if site_var is provided)
+    """
+    # Determine output directory (same as the directory of the CSV file)
+    output_dir = os.path.dirname(os.path.abspath(subjects_csv_file))
+    
+    # Step 1: Extract variables from the model string
+    match = re.search(r'~(.*)\)', model_txt)
+    if not match:
+        raise ValueError("Invalid model string format. Expected '~' and ')'")
+    
+    model_vars = match.group(1)
+    
+    # Replace separators with spaces
+    for sep in ['+', '-', '(', ')', '|', '*', ':', '/']:
+        model_vars = model_vars.replace(sep, ' ')
+    
+    # Split and clean variable list
+    var_list = [var.strip() for var in model_vars.split() if var.strip()]
+    var_list = [var for var in var_list if not var.isdigit()]
+    
+    # Load CSV file
+    print(f"Loading subjects' information from {subjects_csv_file}...")
+    df0 = pd.read_csv(subjects_csv_file)
+    
+    # Create DataFrame with specified columns, dropping NA
+    df = df0[var_list].copy().dropna()
+    
+    # Generate primary Table 1 (by primary group variable)
+    # Exclude site variable if provided
+    df1 = df.drop(table1_site_var, axis=1) if table1_site_var else df
+    
+    # # For fine tune purpose only
+    # df2 = df1.copy() # keep an independent copy 
+    # # Remove rows where GROUP is 0 AND AGE is less than specified age
+    # # df1 = df1[~(df1["AGE"] < 18.1)]
+    # df1 = df1[~((df1["GROUP"] == 0) & (df1["AGE"] < 13.1))]
+    # # df1 = df2.copy() # put the original dataframe back
+    
+    table1 = TableOne(
+        df1, 
+        groupby=table1_group_var, 
+        decimals=3,
+        pval=True, 
+        htest_name=True,
+        dip_test=True, 
+        normal_test=True, 
+        tukey_test=True
+    )
+    print(table1)
+    
+    # Save primary table with model name
+    table1_filename = f"{model_name}_Table_1.csv"
+    table1_path = os.path.join(output_dir, table1_filename)
+    table1.to_csv(table1_path)
+    print(f"Primary table saved to {table1_path}")
+    
+    # Generate supplementary table by site (if site variable provided)
+    tables1 = None
+    if table1_site_var:
+        tables1 = TableOne(
+            df, 
+            groupby=table1_site_var, 
+            decimals=3
+        )
+        
+        # Save supplementary table with model name
+        tables1_filename = f"{model_name}_Table_S1.csv"
+        tables1_path = os.path.join(output_dir, tables1_filename)
+        tables1.to_csv(tables1_path)
+        print(f"Supplementary table saved to {tables1_path}")
+    
+    return table1, tables1
 
 # Function to make roi results report
 def roi_results(model_name, csv_files, my_rois):
@@ -692,6 +1357,50 @@ class Mega:
         # print ending info
         print(f"Stack segmented data completed!\nTime elapsed (in secs): {time.time()-t0}\n")
         
+    def filter(self, all_Subjects, filter_string, model_Subjects, model_name, model_formula, table1_site_var=None, table1_group_var=None):
+        """
+        Filter a pandas DataFrame using a text-based filter condition
+        
+        Args:
+            all_Subjects (str): Path to the 'Subjects.csv' in the Processes folder.
+            filter_string (str): Texts to filter rows of interest, very flexible, such as
+                - "20 < Age < 60; Sex == Female; Gender == 1; Site == Duke, Emory; Sev == 0,1"
+                - "20 < Age < 30, Age > 60; Sex == Female"
+            model_Subjects (str): Path to the 'Subjects.csv' in Results/model-specific folder.
+            model_name (str): Text of statistical model name.
+            model_formula (str): Test of statistical model formula, e.g. "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))"
+            table1_site_var (str): Optional, for site-specific descriptive statistics Table S1.
+            table1_group_var (str): Optional, for descriptive statistics Table 1 & Table S1.
+        
+        Outputs:
+            save filtered dataframe into model-specific .csv.
+        """     
+
+        t0 = time.time()  # Record the start time
+        
+        # Make the destination directory if it doesn't exist
+        os.makedirs(os.path.dirname(model_Subjects), exist_ok=True) 
+        
+        # Read Subjects.csv for all datatype and models
+        na_values = ["NA","na","N/A","n/a","None","none","NONE","NaN","nan","Nan","NAN","","NULL","null","Null"]
+        df = pd.read_csv(all_Subjects, na_values = na_values, keep_default_na=True)
+        
+        # Filter if the filter string exists
+        df = filter_dataframe(df, filter_string) if filter_string is not None else df
+        
+        # Save to model-specific csv
+        df.to_csv(model_Subjects, index=False)
+        print(f"Model-specific csv file made: {model_Subjects}")
+        
+        # Make descriptive reports Table 1 & Table S1
+        try:
+            table1, tables1 = generate_demographic_tables(model_name, model_formula, model_Subjects, table1_group_var, table1_site_var)
+        except Exception as e:
+            print(f"An error occurred for making Table 1 or Table S1: {e}")
+        
+        # Print ending info
+        print(f"Model-specific filtering completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+              
     def stat(self, folder_path, output_dir, R_script_path, subjects_csv_path, model_name, model_txt):
         """
         Statistical analysis across all segmented data files
@@ -779,19 +1488,23 @@ class Mega:
         # print ending info
         print(f"Concatenating CSV files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def reverse(self, process_dir, result_dir, model_name, mask1, path_R_pTFCE, my_rois_path):
+    def reverse(self, process_dir, result_dir, model_name, model_formula, model_Subjects, mask1, path_R_pTFCE, my_rois_path):
         """
         (1) Apply inclusive mask (if available) to restrict all statistical outputs within the mask
         (2) FDR correction (default) for p-values; 
         (3) Negatively log10 transformed p-values; 
-        (4) Reverse the concatenate CSV files of statistical outputs back to its original dimensions;
-        (5) pTFCE for .nii and .nii.gz.
+        (4) Effect size;
+        (5) Reverse the concatenate CSV files of statistical outputs back to its original dimensions;
+        (6) pTFCE for .nii and .nii.gz;
+        (7) Html report.
         
         Args:
             process_dir (str):  Path to the folder of the target data type in the Process folder.
             result_dir (str):   Path to the folder of statistical outputs of the target data type.
             model_name (str):   Name of the model, e.g., 'model_01'.
-            mask1 (str):        Path to the whole brain inclusive mask image, e.g., '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/brain_mask.nii'.
+            model_formula(str): Texts of the model, e.g., 'lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))'.
+            model_Subjects(str):Path to the datatype- and model-specific Subjects's .csv file.
+            mask1 (str):        Path to the inclusive mask image, e.g., '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/brain_mask.nii'.
             path_R_pTFCE (str): Path to the R script for pTFCE on .nii and .nii.gz.
             my_rois_path (str): Path to the file of my_rois, e.g., 'MY_ROIs.xlsx'.
         
@@ -805,7 +1518,7 @@ class Mega:
         print(f"\nInclusive mask: {mask1}")
         
         # Flatten MASK1 if it is available
-        if mask1 is None:
+        if mask1 is None or mask1 == "None" or (not isinstance(mask1, str) and pd.isna(mask1)):
             pass
         else: 
             # flatten the mask1 & save into mask1.csv
@@ -814,14 +1527,15 @@ class Mega:
             # apply_mask_to_csv_files(df_mask, result_dir)
                 # List all CSV files recursively
             csv_files = [os.path.join(root, file) 
-                        for root, _, files in os.walk(result_dir) 
+                        for base_dir in [os.path.join(result_dir, "Mega"), os.path.join(result_dir, "Meta")]
+                        for root, _, files in os.walk(base_dir) if os.path.exists(base_dir)
                         for file in files if file.endswith('.csv')]
             
             # Prepare arguments for multiprocessing
             args = [(csv_file, df_mask['Yvar'].tolist()) for csv_file in csv_files]
             
-            # For test purpose only
-            apply_mask_to_single_csv_file(args[0])
+            # # For test purpose only
+            # apply_mask_to_single_csv_file(args[0])
             
             # Use parallel processing
             with mp.Pool(processes=self.num_processes) as pool:
@@ -874,21 +1588,27 @@ class Mega:
  
         # print ending info
         print(f"Negatively log10 transformation completed!\nTime elapsed (in secs): {time.time()-t0}\n")
-        
+            
         ## (4) Reverse
         # Print information
         t0 = time.time() # start time
         print(f"\nReverse statistical outputs back to original dimensions ... ")
         
-        # List all CSV files recursively in TIDY & GLANCE folders of the given model
-        csv_files = [os.path.join(root, file)
-             for root, _, files in os.walk(result_dir)
-             for file in files
-             if file == (model_name + ".csv") or file == ("neg_log10_" + model_name + ".csv")]
+        # Define the specific directories to search within
+        search_dirs = [os.path.join(result_dir, 'Mega'), os.path.join(result_dir, 'Meta')]
+
+        # List comprehension version with recursive search in specific dirs
+        csv_files = [
+            os.path.join(root, file)
+            for base_dir in search_dirs
+            if os.path.exists(base_dir)
+            for root, dirs, files in os.walk(base_dir)
+            for file in files
+            if (file == (model_name + ".csv") or file == ("neg_log10_" + model_name + ".csv"))
+        ]
         
         # Length of flattened but not segmented data
-        numbers = [int(f.split('_')[1].split('.')[0]) for f in os.listdir(os.path.join(process_dir, 'segmented'))
-           if f.startswith('V') and f.endswith('.csv') and '_' in f and f.split('_')[1].split('.')[0].isdigit()]
+        numbers = [int(f.split('_')[1].split('.')[0]) for f in os.listdir(os.path.join(process_dir, 'segmented')) if f.startswith('V') and f.endswith('.csv') and '_' in f and f.split('_')[1].split('.')[0].isdigit()]
         total_length = max(numbers)
         
         # Info of the input data & flattened data
@@ -904,8 +1624,11 @@ class Mega:
             sample_file = f_data[0]
         else:
             # Check if the array is a symmetric matrix
-            data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
-            # is_symmetric = np.allclose(data, data.T, equal_nan=True)
+            if f_data[0].endswith('.tsv'):
+                data = np.genfromtxt(f_data[0], delimiter='\t')
+            else:  # Default to CSV for other extensions
+                data = np.genfromtxt(f_data[0], delimiter=',')
+            # Is Symmetric
             is_symmetric = np.allclose(data, data.T, equal_nan=True) if data.ndim == 2 and data.shape[0] == data.shape[1] else None
             file_type = 'Symmetric Matrix' if is_symmetric else 'CSV' # file type for .csv files
             sample_file = None
@@ -913,6 +1636,9 @@ class Mega:
         # Arguments
         my_args = [(csv_file, total_length, file_type, sample_file)
                    for csv_file in csv_files]
+        # # Print
+        # for t in my_args:
+        #     print(t)
         
         # # For test purpose only !!
         # reverse_single(my_args[10])
@@ -926,39 +1652,69 @@ class Mega:
         
         
         ## (5) pTFCE
+        if file_extension in ['.nii', '.nii.gz']:
+            # Print information
+            t0 = time.time() # start time
+            print(f"\npTFCE for .nii and .nii.gz ... ")
+            
+            # Folder of statistic
+            folder_statistic = os.path.join(result_dir,'Mega','TIDY','statistic')
+            
+            # List all .nii and .nii.gz recursively in TIDY/statistic folder of the given model
+            my_args = [
+                (
+                    os.path.join(root, file),
+                    os.path.join(root, file).replace("statistic", "df"),
+                    mask1
+                )
+                for root, dirs, files in os.walk(folder_statistic)
+                for file in files
+                if file.startswith("OUT_" + model_name) and (file.endswith(".nii") or file.endswith(".nii.gz"))
+            ]
+            
+            # Parallel processing
+            # Prepare arguments for multiprocessing
+            pool_args = [(path_R_pTFCE, arg) for arg in my_args]
+            
+            # # For test purpose only !!
+            r_script2(pool_args[0])
+
+            # Parallel processing
+            with mp.Pool(processes=self.num_processes) as pool:
+                pool.map(r_script2, pool_args)
+            
+            # Print ending info
+            print(f"pTFCE completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        
+        ## (6) Effect Size (categorical variables only)
         # Print information
         t0 = time.time() # start time
-        print(f"\npTFCE for .nii and .nii.gz ... ")
+        print(f"\nEffect size calculation ... ")
         
-        # Folder of statistic
-        folder_statistic = os.path.join(result_dir,'Mega','TIDY','statistic')
+        # Extract variables
+        model_variables = extract_model_variables(model_formula)
         
-        # List all .nii and .nii.gz recursively in TIFY/statistic folder of the given model
-        my_args = [
-            (
-                os.path.join(root, file),
-                os.path.join(root, file).replace("statistic", "df"),
-                mask1
-            )
-            for root, dirs, files in os.walk(folder_statistic)
-            for file in files
-            if file.startswith("OUT_" + model_name) and (file.endswith(".nii") or file.endswith(".nii.gz"))
-        ]
+        # Find categorical variables
+        list_var = find_categorical_columns(model_Subjects, columns_to_check=model_variables)
         
-        # Parallel processing
-        # Prepare arguments for multiprocessing
-        pool_args = [(path_R_pTFCE, arg) for arg in my_args]
-        
-        # # # For test purpose only !!
-        # r_script2(pool_args[0])
-
-        # Parallel processing
-        with mp.Pool(processes=self.num_processes) as pool:
-            pool.map(r_script2, pool_args)
-            
-        # Print ending info
-        print(f"Reverse statistical outputs back to original dimensions completed!\nTime elapsed (in secs): {time.time()-t0}\n")
-
+        # Run
+        if list_var is not None:
+            for var in list_var:
+                Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".nii.gz_pTFCE","Zmap.nii.gz")
+                if os.path.isfile(Z0): # for NIFTI
+                    N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".nii.gz")
+                    N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".nii.gz")
+                else: # for csv files
+                    Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".csv")
+                    N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".csv")
+                    N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".csv")
+                
+                Out0 = os.path.join(result_dir,"Mega","TIDY","effect_size",var,"OUT_" + model_name)
+                CohenD_CI(Z0, N1, N2, alpha=0.05, output_path=Out0)
+                # Print ending info
+                print(f"Effect size calculation completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        else:
+            print("No mean effects of categorical variables") 
         
         # # Make results report (one .xlsx file per model, one sheet per effect)
         # # Check if the data in the masked folder is 1D (i.e., ROI-based data)
