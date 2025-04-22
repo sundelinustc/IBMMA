@@ -18,7 +18,7 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 
 ---- **_Meta-Analysis & Mega-Analysis_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
 
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Meta_Mega.png?raw=true)
+![alt text](github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Meta_Mega.png?raw=true)
 
 We can get robust and beautiful Meta- and Mega-analysis results:
 ![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
