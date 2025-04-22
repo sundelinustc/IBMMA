@@ -21,10 +21,10 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 ![alt text](github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Meta_Mega.png?raw=true)
 
 We can get robust and beautiful Meta- and Mega-analysis results:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
+![alt text](github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
 
 We can also compare results of different data types or preprocessing protocals:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/main/Figures/Fig_Multi_Data.png?raw=true)
+![alt text](github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Multi_Data.png?raw=true)
 
 ---- **_Data Flexibility_**. Neuroimaging data presents itself in multiple formats, including 3D/4D images capturing brain structures and functions, 2D matrices representing inter-regional brain connections, and 1D values extracted from regions of interest (ROIs). The field has developed numerous specialized software packages, each tailored to specific data types, requiring researchers to invest considerable time and resources mastering multiple analytical tools. 
 
