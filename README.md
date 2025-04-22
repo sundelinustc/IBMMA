@@ -19,13 +19,12 @@ Neuroimaging studies on large datasets aggregated from multiple sites (or source
 ---- **_Meta-Analysis & Mega-Analysis_**. Neuroimaging data were acquired using various scanners and diverse scanning protocols. Demographic characteristics (e.g., age, sex, education level, and socioeconomic status) and clinical characteristics (e.g., diagnosis, comorbidity, and substance/medication usage) of the participants varied significantly across studies. IBMMA employs **meta-** and **mega-analysis** to examine the effects of interest while removing or controlling for the effects of study sites.
 
 ![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Meta_Mega.png)
-![alt text](https://github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Meta_Mega.png?raw=true)
 
 We can get robust and beautiful Meta- and Mega-analysis results:
-![alt text](https://github.com/sundelinustc/IBMMA/blob/tree/2025-04-22/Figures/Fig_IBMMA_Meta_Mega_Results.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_IBMMA_Meta_Mega_Results.png)
 
 We can also compare results of different data types or preprocessing protocals:
-![alt text](https://github.com/sundelinustc/IBMMA/tree/2025-04-22/Figures/Fig_Multi_Data.png?raw=true)
+![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_Multi_Data.png)
 
 ---- **_Data Flexibility_**. Neuroimaging data presents itself in multiple formats, including 3D/4D images capturing brain structures and functions, 2D matrices representing inter-regional brain connections, and 1D values extracted from regions of interest (ROIs). The field has developed numerous specialized software packages, each tailored to specific data types, requiring researchers to invest considerable time and resources mastering multiple analytical tools. 
 
