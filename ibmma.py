@@ -3,8 +3,9 @@ import pandas as pd # for working with csv files
 import multiprocessing as mp # for parallel processing
 from SDL_functions.startup import Clean
 from SDL_functions.mega_analysis import Mega
-from SDL_functions.measures import Measures
+from SDL_functions.meta_analysis import Meta
 from SDL_functions.reports import HTML_Report
+from SDL_functions.reports_meta import HTML_Report_Meta
 
 class IBMMA:
     def __init__(self, file_path_para = 'path_para.xlsx', new_subjects=False, num_processes=None):
@@ -28,13 +29,7 @@ class IBMMA:
             num_segments = 50 # default = 50 segments
             
             # (1) Before Statistical Analysis
-            # Measures before statistics if needed
-            if pd.notna(data_pattern['MEASURE']):
-                Measures().pipeline(self.Subjects, data_pattern)
-            else:
-                Mega().mask(self.Subjects, 'FULL_PATH_DATA_'+data_pattern['NAME'], 'FULL_PATH_MASK_'+data_pattern['NAME'], process_dir)
-
-            # Preparation for statistical analysis
+            Mega().mask(self.Subjects, 'FULL_PATH_DATA_'+data_pattern['NAME'], 'FULL_PATH_MASK_'+data_pattern['NAME'], process_dir)
             Mega().flatten(self.Subjects, 'FULL_PATH_DATA1_'+data_pattern['NAME'], process_dir, num_segments)
             Mega().segment(process_dir) 
             
@@ -54,12 +49,21 @@ class IBMMA:
                 Mega().filter(self.Subjects, filter_string, model_Subjects, model_name, model_formula, table1_site_var,table1_group_var) # filter the rows of interest & save into a model-specific Subjects.csv 
                 Mega().stat(process_dir, os.path.join(process_dir, 'stats'), path_R_stat, model_Subjects, model_name, model_formula) # parallel statistical modelling
                 
-                Mega().concatenate(process_dir, result_dir, model_name) # concatenate the same statistical outputs across segments into a single Model_xxx.csv
+                Mega().concatenate(process_dir, result_dir, model_Subjects, model_name) # concatenate the same statistical outputs across segments into a single Model_xxx.csv
                 Mega().reverse(process_dir, result_dir, model_name, model_formula, model_Subjects, mask1, path_R_pTFCE, my_rois) # reverse the statistical outputs to the dimensions of the masked data
 
                 # (3) After Statistical Analysis: HTML Reports
                 HTML_Report().report(report_dir, result_dir, model_name, model_formula, filter_string, model_Subjects, atlas, labels, table1_site_var, table1_group_var)
                 
+                # (4) Meta-analysis
+                Mega().stat_Meta(process_dir, os.path.join(process_dir, 'stats'), path_R_stat, model_Subjects, model_name, model_formula, table1_site_var) # parallel statistical modelling ste-by-site
+                Mega().concatenate(process_dir, result_dir, model_Subjects, model_name, table1_site_var) # concatenate the same statistical outputs across segments into a single Model_xxx.csv
+                Mega().reverse(process_dir, result_dir, model_name, model_formula, model_Subjects, mask1, path_R_pTFCE, my_rois, table1_site_var)
+                Meta().workflow(report_dir, result_dir, model_name, model_formula, model_Subjects, mask1)
+                HTML_Report_Meta().report(report_dir, result_dir, model_name, model_formula, filter_string, model_Subjects, atlas, labels, table1_site_var, table1_group_var, mask1)
+                
+                pass
+            
 if __name__ == "__main__": 
     
     ibmma = IBMMA(new_subjects=False, num_processes=None)
