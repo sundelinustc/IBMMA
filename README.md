@@ -187,10 +187,6 @@ To review comprehensive statistical outputs, simply left-click the 'index.html' 
 
 Several modules and functions have been planned to be incorporated into IBMMA in future versions:
 
----- Meta-analysis section. There is an earlier version of the Meta-analysis in IBMMA (https://github.com/sundelinustc/ENIGMA_PTSD_MDD). The new version of meta-analysis will apply the algorithm similar to the released Mega-analysis.
-
-![alt text](https://raw.githubusercontent.com/sundelinustc/IBMMA/2025-04-22/Figures/Fig_IBMMA_Meta_Results.png)
-
 ---- Flexible reports. The HTML reports only give the findings survived correction for multiple comparisons. The updated IBMMA will allow users to observe results through self-defined threshold (e.g., p_unc < 0.001, or Z > 3.1 AND nobs > 500).
 
 ---- Flexible pipeline. The current IBMMA pipeline consolidates all steps within a single script, 'ibmma.py'. The forthcoming update will introduce enhanced modularity, allowing users to execute specific workflow segments (such as the preliminary steps before Mega().stat(), facilitating verification of subject inclusion). Moreover, customizable parameters (e.g., the number of CPUs and the number of segmentations) will be implemented through a new 'Parameters' sheet in the 'path_para.xlsx' configuration file, providing greater control over the analytical process while maintaining the pipeline's streamlined structure.
