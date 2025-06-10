@@ -1317,22 +1317,6 @@ class Mega:
         # List of filenames of segments (based on the folder of the 1st fID)
         list_segments = os.listdir(os.path.join(process_dir, 'flattened',list_fID[0]))
         
-        # csv_files = [os.path.join(process_dir,'flattened',folder,list_segments[0]) for folder in list_fID]
-        # List all csv files in a given subject's folder of flattened data files
-        # csv_files = [os.path.join(process_dir, 'flattened', folder, list_segments[0]) 
-        #     for folder in list_fID 
-        #     if not folder.startswith('.') and list_segments[0] and not list_segments[0].startswith('.')]
-        
-        # my_args = [
-        #     (
-        #         os.path.join(process_dir, 'segmented', segment),
-        #         list(zip(
-        #             [os.path.join(process_dir, 'flattened', folder, segment) for folder in list_fID],
-        #             list_fID
-        #         ))
-        #     )
-        #     for segment in list_segments
-        # ]
         my_args = [
             (
                 os.path.join(process_dir, 'segmented', segment),
@@ -1429,11 +1413,12 @@ class Mega:
         # --- arg3, full path to the output directory.
         # --- arg4, model name, e.g. "model_01"
         # --- arg5, texts of model formula, e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))" or "lm(Yvar ~ GROUP + AGE + SEX)".
+        # --- arg6, Default = "Mega" for running mega-analysis
         my_args = [(os.path.abspath(subjects_csv_path), 
                     file, 
                     os.path.join(output_dir, os.path.basename(file)[:-len('.csv')], 'Mega'),
                     model_name,
-                    model_txt) 
+                    model_txt, "Mega") 
                    for file in segmented_files]
         
         # # for test purpose only
@@ -1442,61 +1427,148 @@ class Mega:
         t0 = time.time()  # Record the start time
 
         # Statisyical analysis across all segments in sequence
-        for my_arg in tqdm(my_args, desc="Statistical Modelling", miniters=1):
+        for my_arg in tqdm(my_args, desc="Statistical Modelling (Mega-analysis)", miniters=1):
             r_script(R_script_path, my_arg)  # statistical analysis (parallel processing) using R script
         
         # Print ending info
         print(f"Statistical analyses completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def concatenate(self, folder_path, result_dir, model_name):
+    def stat_Meta(self, folder_path, output_dir, R_script_path, subjects_csv_path, model_name, model_txt, meta_factor):
+        """
+        Statistical analysis across all segmented data files
+        
+        Args:
+            folder_path (str): Path to the folder of the target data type.
+            output_dir (str): Path to the folder of statistical outputs.
+            R_script_path (str): Path to the R script for statistical modelling.
+            subjects_csv_path (str): path to Subjects.csv
+            model_name (str): name of the model, e.g., 'model_01'
+            model_txt (str): text of the model's formula, e.g., 'lm(Yvar ~ GROUP + AGE + SEX)'
+            meta_factor (str): name of the meta factor, e.g., 'SITE'
+        Outputs:
+            save statistical outputs (TIDY & GLANCE).
+        """  
+        # path to the folder of segmented data
+        folder_path = os.path.abspath(folder_path) # use absolute path to avoid errors
+        segmented_path = os.path.join(folder_path, 'segmented') 
+        
+        # list all csv files within the folder of segmented
+        segmented_files = [os.path.join(segmented_path, f) for f in os.listdir(segmented_path) if f.endswith('.csv')]
+           
+        # Arguments
+        # --- arg1, full path to xfile.csv, which contains predictors (row = observation, column = variable).
+        # --- arg2, full path to yfile.csv, which contains outcome variables (row = observation, column = variable).
+        # --- arg3, full path to the output directory.
+        # --- arg4, model name, e.g. "model_01"
+        # --- arg5, texts of model formula, e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))" or "lm(Yvar ~ GROUP + AGE + SEX)".
+        # --- arg6, variable name of the random factor for meta analysis, e.g. "SITE", so that simplified model is running per level (per site). default = "Mega" for running mega-analysis
+        my_args = [(os.path.abspath(subjects_csv_path), 
+                    file, 
+                    os.path.join(output_dir, os.path.basename(file)[:-len('.csv')], 'Meta'),
+                    model_name,
+                    model_txt, 
+                    meta_factor) 
+                   for file in segmented_files]
+        
+        # # for test purpose only
+        # r_script(R_script_path, my_args[0])
+        
+        t0 = time.time()  # Record the start time
+
+        # Statisyical analysis across all segments in sequence
+        for my_arg in tqdm(my_args, desc="Statistical Modelling (Meta-analysis)", miniters=1):
+            r_script(R_script_path, my_arg)  # statistical analysis (parallel processing) using R script
+        
+        # Print ending info
+        print(f"Statistical analyses completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+
+    def concatenate(self, folder_path, result_dir, model_Subjects, model_name, meta_factor=None):
         """
         Concatenate CSV files of statistical outputs across all segments per model.
         
         Args:
             folder_path (str): Path to the folder of the target data type.
             result_dir (str):  Path to the folder of statistical outputs of the target data type.
+            model_Subjects (str): path to Subjects.csv
             model_name (str):  Name of the model, e.g., 'model_01'
-        
+            meta_factor (str):   Default = None then concatenate Mega outputs; if NOT None then concatenate Meta outputs.
+            
         Outputs:
             save concatenated statistical outputs (TIDY & GLANCE).
-        """ 
+        """
+        
         # print information
         t0 = time.time() # start time
         print(f"\nConcatenating CSV files ... ")
         
-        # List all subfolder names under GLANCE & TIDY
-        subfolders_GLANCE = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','GLANCE',os.path.basename(path)) in path}) # all subfolder names of GLANCE
-        subfolders_TIDY0  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','TIDY')                          in path and os.path.basename(path) != 'TIDY'}) # all subfolder names of TIDY
-        subfolders_TIDY1  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','TIDY',os.path.basename(path))   in path}) # immediately subfolder names of TIDY
-        subfolders_TIDY2  = list(set(subfolders_TIDY0) - set(subfolders_TIDY1))
+        if meta_factor is None:
+            # Original Mega processing
+            # List all subfolder names under GLANCE & TIDY
+            subfolders_GLANCE = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','GLANCE',os.path.basename(path)) in path}) # all subfolder names of GLANCE
+            subfolders_TIDY0  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','TIDY')                          in path and os.path.basename(path) != 'TIDY'}) # all subfolder names of TIDY
+            subfolders_TIDY1  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) if os.path.join('Mega','TIDY',os.path.basename(path))   in path}) # immediately subfolder names of TIDY
+            subfolders_TIDY2  = list(set(subfolders_TIDY0) - set(subfolders_TIDY1))
+            
+            # Arguments for GLANCE & TIDY
+            args_GLANCE = [(folder_path, result_dir, model_name, 'Mega', 'GLANCE', subfolder1, None)
+                        for subfolder1 in subfolders_GLANCE]
+            args_TIDY   = [(folder_path, result_dir, model_name, 'Mega', 'TIDY',   subfolder1, subfolder2)
+                        for subfolder1 in subfolders_TIDY1
+                        for subfolder2 in subfolders_TIDY2]
+            my_args = args_GLANCE + args_TIDY # combine the lists of tuples
+            
+            # # For test purpose only !!
+            # concat_csv_single(my_args[9])
+            
+            # Parallel processing
+            with mp.Pool(processes=self.num_processes) as pool:
+                pool.map(concat_csv_single, my_args)
         
-        # Arguments for GLANCE & TIDY
-        args_GLANCE = [(folder_path, result_dir, model_name, 'Mega', 'GLANCE', subfolder1, None)
-                   for subfolder1 in subfolders_GLANCE]
-        args_TIDY   = [(folder_path, result_dir, model_name, 'Mega', 'TIDY',   subfolder1, subfolder2)
-                   for subfolder1 in subfolders_TIDY1
-                   for subfolder2 in subfolders_TIDY2]
-        my_args = args_GLANCE + args_TIDY # combine the lists of tuples
+        else:
+            # Meta processing - loop through unique values of meta_factor column
+            
+            # Read the subjects CSV file
+            subjects_df = pd.read_csv(model_Subjects)
+            
+            # Get unique values from the meta_factor column
+            unique_meta_values = subjects_df[meta_factor].unique()
+            
+            # Loop through each unique meta_factor value
+            for meta_value in unique_meta_values:
+                print(f"Processing meta factor value: {meta_value}")
+                
+                # List all subfolder names under GLANCE & TIDY for Meta
+                subfolders_GLANCE = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) 
+                                        if os.path.join('Meta', str(meta_value), 'GLANCE', os.path.basename(path)) in path})
+                subfolders_TIDY0  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) 
+                                        if os.path.join('Meta', str(meta_value), 'TIDY') in path and os.path.basename(path) != 'TIDY'})
+                subfolders_TIDY1  = list({os.path.basename(path) for path, _, _ in os.walk(folder_path) 
+                                        if os.path.join('Meta', str(meta_value), 'TIDY', os.path.basename(path)) in path})
+                subfolders_TIDY2  = list(set(subfolders_TIDY0) - set(subfolders_TIDY1))
+                
+                # Arguments for GLANCE & TIDY with Meta structure
+                args_GLANCE = [(folder_path, result_dir, model_name, os.path.join('Meta', str(meta_value)), 'GLANCE', subfolder1, None)
+                            for subfolder1 in subfolders_GLANCE]
+                args_TIDY   = [(folder_path, result_dir, model_name, os.path.join('Meta', str(meta_value)), 'TIDY',   subfolder1, subfolder2)
+                            for subfolder1 in subfolders_TIDY1
+                            for subfolder2 in subfolders_TIDY2]
+                my_args = args_GLANCE + args_TIDY # combine the lists of tuples
+                
+                # Parallel processing for this meta_value
+                with mp.Pool(processes=self.num_processes) as pool:
+                    pool.map(concat_csv_single, my_args)
         
-        # # For test purpose only !!
-        # concat_csv_single(my_args[9]) 
-        
-        # Parallel processing
-        with mp.Pool(processes=self.num_processes) as pool:
-            pool.map(concat_csv_single, my_args) 
- 
         # print ending info
         print(f"Concatenating CSV files completed!\nTime elapsed (in secs): {time.time()-t0}\n")
 
-    def reverse(self, process_dir, result_dir, model_name, model_formula, model_Subjects, mask1, path_R_pTFCE, my_rois_path):
+    def reverse(self, process_dir, result_dir, model_name, model_formula, model_Subjects, mask1, path_R_pTFCE, my_rois_path, meta_factor=None):
         """
         (1) Apply inclusive mask (if available) to restrict all statistical outputs within the mask
         (2) FDR correction (default) for p-values; 
         (3) Negatively log10 transformed p-values; 
         (4) Effect size;
         (5) Reverse the concatenate CSV files of statistical outputs back to its original dimensions;
-        (6) pTFCE for .nii and .nii.gz;
-        (7) Html report.
+        (6) pTFCE for .nii and .nii.gz.
         
         Args:
             process_dir (str):  Path to the folder of the target data type in the Process folder.
@@ -1507,6 +1579,7 @@ class Mega:
             mask1 (str):        Path to the inclusive mask image, e.g., '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/brain_mask.nii'.
             path_R_pTFCE (str): Path to the R script for pTFCE on .nii and .nii.gz.
             my_rois_path (str): Path to the file of my_rois, e.g., 'MY_ROIs.xlsx'.
+            meta_factor (str):  Default = None then reverse Mega outputs; if NOT None then reverse Meta outputs.
         
         Outputs:
             save reversed concatenated statistical outputs (TIDY & GLANCE).
@@ -1526,10 +1599,18 @@ class Mega:
             # apply mask to all csv files & update the csv files
             # apply_mask_to_csv_files(df_mask, result_dir)
                 # List all CSV files recursively
+                
+            # csv_files = [os.path.join(root, file) 
+            #             for base_dir in [os.path.join(result_dir, "Mega"), os.path.join(result_dir, "Meta")]
+            #             for root, _, files in os.walk(base_dir) if os.path.exists(base_dir)
+            #             for file in files if file.endswith('.csv')]
+            
             csv_files = [os.path.join(root, file) 
-                        for base_dir in [os.path.join(result_dir, "Mega"), os.path.join(result_dir, "Meta")]
-                        for root, _, files in os.walk(base_dir) if os.path.exists(base_dir)
-                        for file in files if file.endswith('.csv')]
+             for base_dir in [os.path.join(result_dir, "Mega" if meta_factor is None else "Meta")] 
+             for root, _, files in os.walk(base_dir) 
+             if os.path.exists(base_dir) 
+             for file in files 
+             if file.endswith(model_name + '.csv')]
             
             # Prepare arguments for multiprocessing
             args = [(csv_file, df_mask['Yvar'].tolist()) for csv_file in csv_files]
@@ -1552,9 +1633,10 @@ class Mega:
         
         # List all CSV files (model_name + ".csv") recursively under the folder of "p.value"
         csv_files = [os.path.join(root, file)
-             for root, _, files in os.walk(result_dir)
-             for file in files
-             if file == (model_name + ".csv") and os.path.normpath(root).split(os.path.sep)[-2] == "p.value"]
+            for base_dir in [os.path.join(result_dir, "Mega" if meta_factor is None else "Meta")] 
+            for root, _, files in os.walk(base_dir)
+            for file in files
+            if file == (model_name + ".csv") and os.path.normpath(root).split(os.path.sep)[-2] == "p.value"]
         
         # # For test purpose only !!
         # p_correct_fdr(csv_files[0]) 
@@ -1575,9 +1657,10 @@ class Mega:
         
         # List all CSV files (model_name + ".csv") recursively under the folders whose name starts with "p.value"
         csv_files = [os.path.join(root, file)
-             for root, _, files in os.walk(result_dir)
-             for file in files
-             if file == (model_name + ".csv") and os.path.normpath(root).split(os.path.sep)[-2].startswith("p.value")]
+            for base_dir in [os.path.join(result_dir, "Mega" if meta_factor is None else "Meta")] 
+            for root, _, files in os.walk(base_dir)
+            for file in files
+            if file == (model_name + ".csv") and os.path.normpath(root).split(os.path.sep)[-2].startswith("p.value")]
         
         # # For test purpose only !!
         # neg_log10_single(csv_files[0]) 
@@ -1592,15 +1675,12 @@ class Mega:
         ## (4) Reverse
         # Print information
         t0 = time.time() # start time
-        print(f"\nReverse statistical outputs back to original dimensions ... ")
-        
-        # Define the specific directories to search within
-        search_dirs = [os.path.join(result_dir, 'Mega'), os.path.join(result_dir, 'Meta')]
+        print(f"\nReverse statistical outputs back to original dimensions ... ") 
 
         # List comprehension version with recursive search in specific dirs
         csv_files = [
             os.path.join(root, file)
-            for base_dir in search_dirs
+            for base_dir in [os.path.join(result_dir, "Mega" if meta_factor is None else "Meta")] 
             if os.path.exists(base_dir)
             for root, dirs, files in os.walk(base_dir)
             for file in files
@@ -1636,93 +1716,101 @@ class Mega:
         # Arguments
         my_args = [(csv_file, total_length, file_type, sample_file)
                    for csv_file in csv_files]
-        # # Print
-        # for t in my_args:
-        #     print(t)
         
         # # For test purpose only !!
         # reverse_single(my_args[10])
         
         # Parallel processing
-        with mp.Pool(processes=self.num_processes) as pool:
+        with mp.Pool(processes=self.num_processes-1) as pool:
             pool.map(reverse_single, my_args) 
             
         # Print ending info
         print(f"Reverse statistical outputs back to original dimensions completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+    
+        # (5) pTFCE
+        t0 = time.time() # start time
+        print(f"\npTFCE ... ") 
         
+        # Determine folder_statistic based on meta_factor
+        if meta_factor is None:
+            folder_statistic = os.path.join(result_dir, 'Mega', 'TIDY', 'statistic')
+            folder_list = [folder_statistic]
+        else:
+            # Find all paths that start with result_dir/Meta and end with TIDY/statistic
+            meta_base = os.path.join(result_dir, 'Meta')
+            folder_list = []
+            if os.path.exists(meta_base):
+                for item in os.listdir(meta_base):
+                    potential_path = os.path.join(meta_base, item, 'TIDY', 'statistic')
+                    if os.path.exists(potential_path):
+                        folder_list.append(potential_path)
+
+        # List all .nii and .nii.gz recursively in TIDY/statistic folder(s) of the given model
+        my_args = []
+        for folder_statistic in folder_list:
+            for root, dirs, files in os.walk(folder_statistic):
+                for file in files:
+                    if file.startswith("OUT_" + model_name) and (file.endswith(".nii") or file.endswith(".nii.gz")):
+                        # Determine df path - check both TIDY/df and GLANCE/df
+                        base_path = os.path.abspath(os.path.join(root, file))
+                        if 'TIDY' in base_path:
+                            base_path0 = base_path.split('TIDY')[0]
+                        
+                        # Try TIDY/df first
+                        df_path_tidy   = os.path.join(base_path0, 'TIDY', 'df')
+                        df_path_glance = os.path.join(base_path0, 'GLANCE', 'df')
+
+                        # Use whichever df path exists, preferring GLANCE over TIDY
+                        if os.path.exists(df_path_glance):
+                            df_path = os.path.join(df_path_glance, "OUT_" + model_name + ".nii.gz")
+                            my_args.append((base_path, df_path, mask1))
+                        elif os.path.exists(df_path_tidy):
+                            df_path = base_path.replace('statistic', 'df')
+                            my_args.append((base_path, df_path, mask1))
+                            # If neither path exists, do not append to my_args
+            
+        # Parallel processing
+        # Prepare arguments for multiprocessing
+        pool_args = [(path_R_pTFCE, arg) for arg in my_args]
         
-        ## (5) pTFCE
-        if file_extension in ['.nii', '.nii.gz']:
+        # # For test purpose only !!
+        # r_script2(pool_args[0])
+
+        # Parallel processing
+        with mp.Pool(processes=self.num_processes) as pool:
+            pool.map(r_script2, pool_args)
+        
+        # Print ending info
+        print(f"pTFCE completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+        
+        ## (6) Effect Size (categorical variables only, Mega-analysis only)
+        if meta_factor is None:
             # Print information
             t0 = time.time() # start time
-            print(f"\npTFCE for .nii and .nii.gz ... ")
+            print(f"\nEffect size calculation ... ")
             
-            # Folder of statistic
-            folder_statistic = os.path.join(result_dir,'Mega','TIDY','statistic')
+            # Extract variables
+            model_variables = extract_model_variables(model_formula)
             
-            # List all .nii and .nii.gz recursively in TIDY/statistic folder of the given model
-            my_args = [
-                (
-                    os.path.join(root, file),
-                    os.path.join(root, file).replace("statistic", "df"),
-                    mask1
-                )
-                for root, dirs, files in os.walk(folder_statistic)
-                for file in files
-                if file.startswith("OUT_" + model_name) and (file.endswith(".nii") or file.endswith(".nii.gz"))
-            ]
+            # Find categorical variables
+            list_var = find_categorical_columns(model_Subjects, columns_to_check=model_variables)
             
-            # Parallel processing
-            # Prepare arguments for multiprocessing
-            pool_args = [(path_R_pTFCE, arg) for arg in my_args]
-            
-            # # For test purpose only !!
-            r_script2(pool_args[0])
-
-            # Parallel processing
-            with mp.Pool(processes=self.num_processes) as pool:
-                pool.map(r_script2, pool_args)
-            
-            # Print ending info
-            print(f"pTFCE completed!\nTime elapsed (in secs): {time.time()-t0}\n")
-        
-        ## (6) Effect Size (categorical variables only)
-        # Print information
-        t0 = time.time() # start time
-        print(f"\nEffect size calculation ... ")
-        
-        # Extract variables
-        model_variables = extract_model_variables(model_formula)
-        
-        # Find categorical variables
-        list_var = find_categorical_columns(model_Subjects, columns_to_check=model_variables)
-        
-        # Run
-        if list_var is not None:
-            for var in list_var:
-                Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".nii.gz_pTFCE","Zmap.nii.gz")
-                if os.path.isfile(Z0): # for NIFTI
-                    N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".nii.gz")
-                    N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".nii.gz")
-                else: # for csv files
-                    Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".csv")
-                    N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".csv")
-                    N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".csv")
-                
-                Out0 = os.path.join(result_dir,"Mega","TIDY","effect_size",var,"OUT_" + model_name)
-                CohenD_CI(Z0, N1, N2, alpha=0.05, output_path=Out0)
-                # Print ending info
-                print(f"Effect size calculation completed!\nTime elapsed (in secs): {time.time()-t0}\n")
-        else:
-            print("No mean effects of categorical variables") 
-        
-        # # Make results report (one .xlsx file per model, one sheet per effect)
-        # # Check if the data in the masked folder is 1D (i.e., ROI-based data)
-        # data = np.genfromtxt(f_data[0], delimiter=',') # load the 1st .csv file
-        # if data.ndim == 1:
-        #     my_rois = pd.read_excel(my_rois_path, sheet_name='MY_ROIs', dtype='object')
-        #     roi_results(model_name, csv_files, my_rois)
-        
-        # # Print ending info
-        # print(f"ROI results report completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+            # Run
+            if list_var is not None:
+                for var in list_var:
+                    Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".nii.gz_pTFCE","Zmap.nii.gz")
+                    if os.path.isfile(Z0): # for NIFTI
+                        N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".nii.gz")
+                        N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".nii.gz")
+                    else: # for csv files
+                        Z0 = os.path.join(result_dir,"Mega","TIDY","statistic",var,"OUT_" + model_name + ".csv")
+                        N1 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_0","OUT_" + model_name + ".csv")
+                        N2 = os.path.join(result_dir,"Mega","GLANCE","nobs_" + var + "_1","OUT_" + model_name + ".csv")
+                    
+                    Out0 = os.path.join(result_dir,"Mega","TIDY","effect_size",var,"OUT_" + model_name)
+                    CohenD_CI(Z0, N1, N2, alpha=0.05, output_path=Out0)
+                    # Print ending info
+                    print(f"Effect size calculation completed!\nTime elapsed (in secs): {time.time()-t0}\n")
+            else:
+                print("No mean effects of categorical variables") 
  

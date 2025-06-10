@@ -19,8 +19,12 @@
 # No part of this script may be reproduced in any form without the prior permission of Delin Sun.
 
 # for test purpose only
-path_Tmap  <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/Mega/TIDY/statistic/GROUP/OUT_M01.nii.gz'
-path_DoF   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/Mega/TIDY/df/GROUP/OUT_M01.nii.gz'
+# path_Tmap  <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/Mega/TIDY/statistic/GROUP/OUT_M01.nii.gz'
+# path_DoF   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/Mega/TIDY/df/GROUP/OUT_M01.nii.gz'
+
+path_Tmap  <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_16/Results/reHo2_reho/Meta/ADNI/TIDY/statistic/AGE/OUT_M01.nii.gz'
+path_DoF   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_16/Results/reHo2_reho/Meta/ADNI/GLANCE/df/OUT_M01.nii.gz'
+
 path_Mask  <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/tpl-MNI152NLin2009cAsym_res-02_label-GM_binary_mask_80percent.nii.gz' # brain_mask.nii
 
 # (0) get command line arguments

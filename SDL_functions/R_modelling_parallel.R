@@ -9,6 +9,7 @@
 # --- arg3, full path to the output directory.
 # --- arg4, model name, e.g. "model_01"
 # --- arg5, texts of model formula, e.g., "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))" or "lm(Yvar ~ GROUP + AGE + SEX)".
+# --- arg6, variable name of the random factor for meta analysis, e.g. "SITE", so that simplified model is running per level (per site). default = "Mega" for running mega-analysis
 # An example of terminal command:
 # Rscript ./SDL_functions/R_modelling_parallel.R ./Progress/Subjects.csv ./Progress/atlas_conn_SFC/static_fc/segmented/V47000_48880.csv  ./Progress/atlas_conn_SFC/static_fc/stats/V47000_48880/Mega "model_01" "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))"
 
@@ -18,16 +19,15 @@
 # No part of this script may be reproduced in any form without the prior permission of Delin Sun.
 
 # for test purpose only
-# xfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Results/reHo_reho/report/Subjects/M01.csv'
-xfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/RBA_input_demographics_only.csv'
-yfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/V584280_605920.csv'
-out_dir <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/Data/from_Nadza/stats/V584280_605920/Mega'
-model_name <- 'Model_01'
-# formula <- "lmer(Yvar ~ DX + AGE + SEX + (1|Sample))"
-formula <- "lm(Yvar ~ DX + AGE + SEX)"
+xfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Reports/reHo_reho/Subjects/M01_Seth.csv'
+yfile   <- '/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA-v0.1.1-beta_13/Processes/reHo_reho/segmented/V476080_497720.csv'
+out_dir <- 'Processes/reHo_reho/stats/V476080_497720/Mega'
+# out_dir <- 'Processes/reHo_reho/stats/V476080_497720/Meta'
+model_name <- 'M01_Seth'
 # formula <- "lm(Yvar ~ GROUP * AGE + SEX)"
-# formula <- "lmer(Yvar ~ GROUP + AGE + SEX + (1|SITE))"
+formula <- 'lmer(Yvar ~ GROUP_Seth_PTSD_TEC + AGE + AGE2 + SEX + (1|SITE))'
 # formula <- "lmer(Yvar ~ 1 + (1|SITE))"
+meta_factor <- "Mega"
 
 # (0) get command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -36,6 +36,7 @@ yfile   <- args[2]
 out_dir <- args[3]
 model_name <- args[4]
 formula <- args[5]
+meta_factor <- args[6]
 
 # (1) Packages
 # install pacman to load the other packages
@@ -418,11 +419,41 @@ parallel_model <- function(xfile, yfile, out_dir, model_name, formula, fit_model
     # remove the bad columns (if any) from ydt
     if (length(bad_columns) > 0){ydt[, (bad_columns) := NULL]}
 
-    # fit model parallely
-    output <- fit_model_parallel(xdt, ydt, formula, fit_model, nobs_extra, random_var=random_factors)
+      # if meta_factor is one of demographic/clinical variables, and is a random factor in the formula
+      if ((meta_factor %in% names(xdt)) & (meta_factor==strsplit(gsub("\\(|\\)", "", formula), "\\|")[[1]][2])){# Meta-analysis
+        # Filter subjects per unique value of meta_factor (SITE)
+        for (val in unique(xdt[[meta_factor]])) {
+            indices <- which(xdt[[meta_factor]] == val)# Indices of a particular meta_facotr (e.g. SITE), e.g. Duke
+            xdt1 <- xdt[indices]
+            ydt1 <- ydt[indices]
 
-    # save TIDY & GLANCE parallely
-    save_broom_parallel(output$TIDY, output$GLANCE, outdir, model_name)
+            # Revise formula by removing specifid random factor & change lmer to lm
+            # e.g., "lmer(Yvar ~ GROUP * AGE + AGE2 + SEX + (1|SITE))"
+            # to    "lm(Yvar ~ GROUP * AGE + AGE2 + SEX)"
+            formula1 <- gsub("lmer\\(", "lm(", paste0(strsplit(formula, paste0(" \\+ \\(1\\|", meta_factor, "\\)"))[[1]][1], ")"))
+            
+            # Revise formula1 by removing variables that contain constant values in xdt1
+            # e.g., "lmer(Yvar ~ GROUP * AGE + AGE2)" if SEX is constant
+            for (var in names(xdt1)) {
+                if (length(unique(xdt1[[var]])) == 1) {
+                    formula1 <- gsub(paste0("\\+\\s*", var), "", formula1)
+                    formula1 <- gsub(paste0("\\s*\\+\\s*", var), "", formula1)
+                }
+            }
+
+            # fit model parallely
+            output <- fit_model_parallel(xdt1, ydt1, formula1, fit_model, nobs_extra, random_var=random_factors)
+            # save TIDY & GLANCE parallely
+            save_broom_parallel(output$TIDY, output$GLANCE, file.path(outdir,val), model_name)
+        }
+        
+      } else {# Mega-analysis
+          # fit model parallely
+          output <- fit_model_parallel(xdt, ydt, formula, fit_model, nobs_extra, random_var=random_factors)
+          # save TIDY & GLANCE parallely
+          save_broom_parallel(output$TIDY, output$GLANCE, outdir, model_name) # site-specific statistical outputs
+      }
+
   }
 }
 
