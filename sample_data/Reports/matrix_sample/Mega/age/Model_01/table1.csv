@@ -1,0 +1,6 @@
+,,Grouped by group,Grouped by group,Grouped by group,Grouped by group,Grouped by group,Grouped by group
+,,Missing,Overall,0,1,P-Value,Test
+n,,,24,12,12,,
+"age, mean (SD)",,0,42.500 (13.835),39.076 (13.141),45.924 (14.210),0.233,Two Sample T-test
+"age2, mean (SD)",,0,1989.674 (1187.769),1685.243 (1057.527),2294.104 (1276.431),0.217,Two Sample T-test
+"sex, mean (SD)",,0,0.500 (0.511),0.500 (0.522),0.500 (0.522),1.000,Two Sample T-test

@@ -1,0 +1,2 @@
+cluster_id,peak_x,peak_y,peak_z,peak_value,volume_mm,harvard_oxford,aal,desikan_killiany,destrieux,marsatlas,aicha,juelich,neuromorphometrics,talairach_ba,talairach_gyrus
+1.0,-2.5,-54.5,23.5,12.81619930267334,768.0,54.0% Left_Cingulate_Gyrus_posterior_division; 45.0% Left_Precuneous_Cortex,Cingulate_Post_L,Unknown,Unknown,no_label,G_Precuneus-3-L,0% no_label,Left_PCu_precuneus,Brodmann_area_31,Posterior_Cingulate

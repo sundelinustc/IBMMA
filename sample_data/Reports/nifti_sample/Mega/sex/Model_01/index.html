@@ -1,0 +1,229 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Neuroimaging Analysis Results</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; }
+                h1, h2, h3 { color: #2c3e50; }
+                table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 0.9em; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                img { max-width: 100%; height: auto; margin: 20px 0; border: 1px solid #ddd; }
+                .visualization { margin: 30px 0; background: #f9f9f9; padding: 20px; border-radius: 5px; }
+                iframe { width: 100%; height: 600px; border: none; }
+                .section { margin-bottom: 40px; }
+                footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.8em; color: #777; }
+                .code { font-family: monospace; background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+                .info-table { width: 100%; margin-bottom: 20px; }
+                .info-table td { padding: 8px; vertical-align: top; }
+                .info-table td:first-child { font-weight: bold; width: 200px; }
+                .footnotes { margin-top: 15px; font-size: 0.9em; background-color: #f8f8f8; padding: 15px; border-radius: 5px; }
+                .footnotes ol { padding-left: 20px; }
+                .footnotes li { margin-bottom: 5px; }
+                .table-responsive { overflow-x: auto; }
+                .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(0,0,0,.05); }
+            </style>
+        </head>
+        <body>
+            <h1>Neuroimaging Statistical Analysis Results</h1>
+            
+            <div class="section">
+                <h2>Analysis Information</h2>
+                <table class="info-table">
+                    <tr><td>Data Type</td><td>nifti_sample</td></tr>
+                    <tr><td>Model Number</td><td>Model_01</td></tr>
+                    <tr><td>Model Equation</td><td>lmer(Yvar ~ group + age + age2 + sex + (1|site))</td></tr>
+                    <tr><td>Effect of Interest</td><td>sex</td></tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>File Paths</h2>
+                <table class="info-table">
+                    <tr><td>Positive Map:</td><td>Results/nifti_sample/Mega/TIDY/statistic/sex/OUT_Model_01.nii.gz_pTFCE/pTFCE-z-score-map.nii.gz</td></tr>
+                    <tr><td>Negative Map:</td><td>Results/nifti_sample/Mega/TIDY/statistic/sex/OUT_Model_01.nii.gz_pTFCE/pTFCE-z-reversed-score-map.nii.gz</td></tr>
+                    <tr><td>Threshold File:</td><td>Results/nifti_sample/Mega/TIDY/statistic/sex/OUT_Model_01.nii.gz_pTFCE/thres_z_fwer0.05.txt</td></tr>
+                    <tr><td>Output Directory:</td><td>Reports/nifti_sample/Mega/sex/Model_01</td></tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>Methods</h2>
+                <p>Statistical analysis was conducted using the <a href="https://github.com/sundelinustc/IBMMA" target="_blank">IBMMA</a> package for neuroimaging data processing. Statistical inference was enhanced through the implementation of the probabilistic threshold-free cluster enhancement (<a href="https://spisakt.github.io/pTFCE/" target="_blank">pTFCE) method</a>, which optimizes the detection of significant signals by combining cluster extent and voxel intensity information. Two-tailed statistical maps were thresholded at Z<sub>pTFCE</sub> &gt; 5.9 
+                (corresponding to p<sub>FWE</sub> &lt; 0.05) with a minimum cluster extent threshold of 20 contiguous voxels to control for multiple comparisons. All visualizations presented herein display only voxels that exceeded these statistical thresholds.</p>
+                <p>Anatomical localization of significant clusters and peaks was performed using the <a href="https://nilearn.github.io/stable/modules/generated/nilearn.reporting.get_clusters_table.html" target="_blank">Nilearn</a> and the <a href="https://github.com/miykael/atlasreader" target="_blank">AtlasReader</a> packages, which provide standardized labeling according to multiple neuroanatomical atlases for comprehensive spatial interpretation of results.</p>
+            </div>
+
+            <div class="section">
+                <h2>Results</h2>
+            </div>
+            
+            <div class="section">
+                <h2>Table 1. Demographic and Clinical Information</h2>
+                <div class="table-responsive">
+                    <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Variables</th>
+      <th></th>
+      <th>Missing</th>
+      <th>Overall</th>
+      <th>0</th>
+      <th>1</th>
+      <th>P-Value</th>
+      <th>Test</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>n</td>
+      <td></td>
+      <td></td>
+      <td>24</td>
+      <td>12</td>
+      <td>12</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>age, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>42.500 (13.835)</td>
+      <td>39.076 (13.141)</td>
+      <td>45.924 (14.210)</td>
+      <td>0.233</td>
+      <td>Two Sample T-test</td>
+    </tr>
+    <tr>
+      <td>age2, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>1989.674 (1187.769)</td>
+      <td>1685.243 (1057.527)</td>
+      <td>2294.104 (1276.431)</td>
+      <td>0.217</td>
+      <td>Two Sample T-test</td>
+    </tr>
+    <tr>
+      <td>sex, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>0.500 (0.511)</td>
+      <td>0.500 (0.522)</td>
+      <td>0.500 (0.522)</td>
+      <td>1.0</td>
+      <td>Two Sample T-test</td>
+    </tr>
+  </tbody>
+</table>
+                    <p><em>Note: Group comparisons of demographic and clinical variables.</em></p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Table S1. Site-Specific Information</h2>
+                <div class="table-responsive">
+                    <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>SITE</th>
+      <th>n</th>
+      <th>group, mean (SD)</th>
+      <th>age, mean (SD)</th>
+      <th>age2, mean (SD)</th>
+      <th>sex, mean (SD)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th></th>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>Missing</th>
+      <td></td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>Overall</th>
+      <td>24</td>
+      <td>0.500 (0.511)</td>
+      <td>42.500 (13.835)</td>
+      <td>1989.674 (1187.769)</td>
+      <td>0.500 (0.511)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>41.277 (11.285)</td>
+      <td>1815.235 (899.662)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>47.880 (15.074)</td>
+      <td>2491.352 (1349.895)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>38.342 (14.825)</td>
+      <td>1662.435 (1248.628)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+  </tbody>
+</table>
+                    <p><em>Note: Distribution of variables across different sites.</em></p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Slice Views</h2>
+                
+                <div>
+                    <h3>Axial Slices</h3>
+                    <img src="slice_view_axial.png" alt="Axial Slices">
+                </div>
+                
+                <div>
+                    <h3>Sagittal Slices</h3>
+                    <img src="slice_view_sagittal.png" alt="Sagittal Slices">
+                </div>
+                
+                <div>
+                    <h3>Coronal Slices</h3>
+                    <img src="slice_view_coronal.png" alt="Coronal Slices">
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Interactive Visualizations</h2>
+                
+                <div>
+                    <h3>Surface Projection</h3>
+                    <iframe src="surface_view.html" style="width: 100%; height: 600px; border: none;"></iframe>
+                </div>
+                
+                <div>
+                    <h3>3D View</h3>
+                    <p>Nevigate the brain maps through left-click.</p>
+                    <iframe src="interactive_map.html" style="width: 100%; height: 600px; border: none;"></iframe>
+                </div>
+            </div>
+        

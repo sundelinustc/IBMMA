@@ -1,0 +1,333 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Correlation Matrix Analysis</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 20px;
+                color: #333;
+            }
+            h1, h2, h3 {
+                color: #2c3e50;
+            }
+            .section {
+                margin-bottom: 30px;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+                border: 1px solid #ddd;
+            }
+            .caption {
+                margin-top: 5px;
+                font-style: italic;
+                color: #666;
+            }
+            .methods {
+                text-align: justify;
+                padding: 15px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #2c3e50;
+            }
+            .pagination {
+                margin-top: 20px;
+                text-align: center;
+            }
+            .pagination a {
+                display: inline-block;
+                padding: 8px 16px;
+                text-decoration: none;
+                color: #2c3e50;
+                border: 1px solid #ddd;
+                margin: 0 4px;
+            }
+            .pagination a:hover {
+                background-color: #e9e9e9;
+            }
+            .no-results {
+                text-align: center;
+                padding: 20px;
+                font-style: italic;
+                color: #777;
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Correlation Matrix Analysis Report</h1>
+        
+        <div class="section">
+            <h2>Analysis Information</h2>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Data Type</td>
+                    <td>matrix_sample</td>
+                </tr>
+                <tr>
+                    <td>Model Number</td>
+                    <td>Model_01</td>
+                </tr>
+                <tr>
+                    <td>Model Equation</td>
+                    <td>lmer(Yvar ~ group + age + age2 + sex + (1|site))</td>
+                </tr>
+                <tr>
+                    <td>Effect of Interest</td>
+                    <td>age2</td>
+                </tr>
+                <tr>
+                    <td>p<sub>FDR</sub> Threshold</td>
+                    <td>0.05</td>
+                </tr>
+                <tr>
+                    <td>Number of Nodes</td>
+                    <td>246</td>
+                </tr>
+                <tr>
+                    <td>Number of Significant Connections</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td>Number of Nodes with Significant Connections</td>
+                    <td>0</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>File Paths</h2>
+            <table>
+                <tr>
+                    <th>File Type</th>
+                    <th>Path</th>
+                </tr>
+                <tr>
+                    <td>Statistics File</td>
+                    <td>Results/matrix_sample/Mega/TIDY/statistic/age2/OUT_Model_01.csv</td>
+                </tr>
+                <tr>
+                    <td>P-value File</td>
+                    <td>Results/matrix_sample/Mega/TIDY/p.value.fdr/age2/OUT_Model_01.csv</td>
+                </tr>
+                <tr>
+                    <td>Node Labels File</td>
+                    <td>/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA_test/sample_data/tpl-MNI152NLin2009cAsym_atlas-brainnetome_dseg.txt</td>
+                </tr>
+                <tr>
+                    <td>Atlas File</td>
+                    <td>/mnt/munin/Morey/Lab/Delin/Projects/IBMMA/IBMMA_test/sample_data/tpl-MNI152NLin2009cAsym_atlas-brainnetome_dseg.nii.gz</td>
+                </tr>
+                <tr>
+                    <td>Output Directory</td>
+                    <td>Reports/matrix_sample/Mega/age2/Model_01</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Methods</h2>
+            <div class="methods">
+                <p>Statistical analysis was conducted using the Image-Based Mega- and Meta-Analysis (<a href="https://github.com/sundelinustc/IBMMA" target="_blank">IBMMA</a>) 
+                framework for neuroimaging region-of-interest (ROI) connectivity analysis. 
+                The analytical approach employed a comprehensive examination of functional connectivity patterns 
+                between ROIs based on the specified atlas parcellation.</p>
+                
+                <p>All statistical comparisons were performed using two-tailed statistical tests with false discovery 
+                rate (FDR) correction to account for multiple comparisons across the connection matrix. 
+                Only connections that survived the statistical threshold of p<sub>FDR</sub> &lt; 0.05 were included 
+                in subsequent analyses and visualizations, ensuring rigorous control of Type I error while 
+                maintaining appropriate sensitivity to detect biologically meaningful effects.</p>
+                
+                <p>Visualization of the thresholded connection matrices and three-dimensional brain connectome 
+                representations was implemented using the Nilearn package in Python. Matrix 
+                visualizations were generated with a divergent color scheme to illustrate the directionality and 
+                magnitude of significant associations, while connectome visualizations employed standardized 
+                Montreal Neurological Institute (MNI) space coordinates to accurately represent the spatial 
+                configuration of significant interregional connections.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Results</h2>
+            
+        <div class="section">
+            <h2>Table 1. Demographic and Clinical Information</h2>
+            <div class="table-responsive">
+                <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Variables</th>
+      <th></th>
+      <th>Missing</th>
+      <th>Overall</th>
+      <th>0</th>
+      <th>1</th>
+      <th>P-Value</th>
+      <th>Test</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>n</td>
+      <td></td>
+      <td></td>
+      <td>24</td>
+      <td>12</td>
+      <td>12</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>age, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>42.500 (13.835)</td>
+      <td>39.076 (13.141)</td>
+      <td>45.924 (14.210)</td>
+      <td>0.233</td>
+      <td>Two Sample T-test</td>
+    </tr>
+    <tr>
+      <td>age2, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>1989.674 (1187.769)</td>
+      <td>1685.243 (1057.527)</td>
+      <td>2294.104 (1276.431)</td>
+      <td>0.217</td>
+      <td>Two Sample T-test</td>
+    </tr>
+    <tr>
+      <td>sex, mean (SD)</td>
+      <td></td>
+      <td>0.0</td>
+      <td>0.500 (0.511)</td>
+      <td>0.500 (0.522)</td>
+      <td>0.500 (0.522)</td>
+      <td>1.0</td>
+      <td>Two Sample T-test</td>
+    </tr>
+  </tbody>
+</table>
+                <p><em>Note: Group comparisons of demographic and clinical variables.</em></p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Table S1. Site-Specific Information</h2>
+            <div class="table-responsive">
+                <table class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>SITE</th>
+      <th>n</th>
+      <th>group, mean (SD)</th>
+      <th>age, mean (SD)</th>
+      <th>age2, mean (SD)</th>
+      <th>sex, mean (SD)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th></th>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>Missing</th>
+      <td></td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>Overall</th>
+      <td>24</td>
+      <td>0.500 (0.511)</td>
+      <td>42.500 (13.835)</td>
+      <td>1989.674 (1187.769)</td>
+      <td>0.500 (0.511)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>41.277 (11.285)</td>
+      <td>1815.235 (899.662)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>47.880 (15.074)</td>
+      <td>2491.352 (1349.895)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>8</td>
+      <td>0.500 (0.535)</td>
+      <td>38.342 (14.825)</td>
+      <td>1662.435 (1248.628)</td>
+      <td>0.500 (0.535)</td>
+    </tr>
+  </tbody>
+</table>
+                <p><em>Note: Distribution of variables across different sites.</em></p>
+            </div>
+        </div>
+            
+            <h3>Thresholded Statistics Matrix of Connectivity</h3>
+            <img src="thresholded_matrix.png" alt="Thresholded Statistics Matrix">
+            <p class="caption">Figure 1: No significant connections were detected at the threshold of p<sub>FDR</sub> &lt; 0.05.</p>
+            
+            <h3>Brain Connectome</h3>
+            <img src="brain_connectome.png" alt="Brain Connectome">
+            <p class="caption">Figure 2: Glass brain visualization shown without connections, as no significant connections were detected at the threshold of p<sub>FDR</sub> &lt; 0.05.</p>
+        </div>
+        
+        <div class="section">
+            <h2>Table 2. Significant Connections</h2>
+    
+            <div class="no-results">
+                <p>No significant results.</p>
+            </div>
+        
+        </div>
+        
+        <footer style="margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.8em; color: #777; text-align: center;">
+            Report generated on: 2025-10-05 23:36:34
+        </footer>
+    </body>
+    </html>
+    
