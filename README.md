@@ -12,6 +12,29 @@ In summary, IBMMA is an optimal tool for big neuroimaging data analysis and disp
 
 The current version was mainly developped and tested through using the VSCode(Visual Studio Code) software under Linux platform running on Duke BIAC Cluster. More tests and debugs are needed for different platforms and operating systems. Please download & test the code. Please feel free to contact Dr. Delin Sun at **_ds366@duke.edu_** if you meet any problem.
 
+# Installation
+
+Download or clone the entire package. Configure Python and R according to the requirements below. Set up your data paths and parameters in path_para.xlsx. Run python ibmma.py in the terminal. View summary reports in the Reports subfolder and detailed results in the Results subfolder.
+
+**Python Requirements** 
+Python==3.11.9
+atlasreader==0.3.2
+matplotlib==3.10.6
+nibabel==5.3.2
+nilearn==0.12.1
+numpy==2.3.3
+pandas==2.3.2
+scipy==1.16.1
+seaborn==0.13.2
+statsmodels==0.14.4
+tableone==0.9.5
+tqdm==4.66.5
+
+**R Requirements** 
+R==4.2.2
+pacman==0.5.1
+pTFCE==0.2.2.1
+
 # Why to Use It?
 
 Neuroimaging studies on large datasets aggregated from multiple sites (or sources) are becoming increasingly popular. Data repositories such as ENIGMA and NCANDA often provide brain data from hundreds or thousands of individuals. Findings from these large neuroimaging datasets are more robust and replicable than results from traditional single-cohort studies, potentially paving the way for uncovering stable biomarkers for clinical diagnosis and intervention. However, advantages also accompany these challenges:
